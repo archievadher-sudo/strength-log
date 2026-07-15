@@ -9,3 +9,5 @@ export_*.csv
 Training-Tracker.xlsx
 # superseded single-account deploy folder
 site/
+
+dashboard.html
