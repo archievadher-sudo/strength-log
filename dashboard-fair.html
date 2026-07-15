@@ -205,20 +205,36 @@ main{padding:28px 0 72px}
 .block-body{overflow:hidden;max-height:1600px;transition:max-height .34s var(--ease),opacity .24s var(--ease)}
 .block.collapsed .block-body{max-height:0;opacity:0}
 
-.ex-thead,.exrow-main{display:grid;grid-template-columns:1.35fr 96px 60px 92px 92px 22px;align-items:center;gap:16px}
+.ex-table{--exg:minmax(150px,1.25fr) minmax(0,1fr) minmax(0,1fr) 86px 92px 22px}
+.ex-table.single{--exg:minmax(150px,1.3fr) 96px 60px 86px 92px 22px}
+.cmp-bar,.ex-thead,.exrow-main{display:grid;grid-template-columns:var(--exg);align-items:center;gap:16px}
+.cmp-bar{padding:14px 24px 13px;border-bottom:1px solid var(--border-div)}
+.cmp-bar .cb-lab{font-weight:600;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--content-tertiary);align-self:center}
+.cmp-bar select{width:100%;font-family:var(--font-display);font-weight:700;font-size:13.5px;color:var(--content-primary);
+  background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:11px;padding:9px 32px 9px 13px;cursor:pointer;
+  -webkit-appearance:none;appearance:none;box-shadow:var(--elevation-1);
+  -webkit-backdrop-filter:blur(14px) saturate(180%);backdrop-filter:blur(14px) saturate(180%);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238B6914' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 11px center}
+.cmp-bar select:hover{border-color:var(--gold)}
+.cmp-bar select:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 .ex-thead{padding:2px 24px 10px;font-weight:600;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--content-tertiary)}
 .ex-thead .tcol{text-align:center}
 .exrow{border-top:1px solid var(--border-div)}
 .exrow-main{padding:13px 24px;cursor:pointer}
 .exrow-main:hover{background:rgba(212,160,67,.05)}
 .ex-name{font-weight:600;font-size:15px}
+/* two-week compare pairs */
+.pair,.pair-h{display:grid;grid-template-columns:minmax(0,1fr) 40px;gap:12px;align-items:start}
+.pair.pb,.ex-thead .pair-h+.pair-h{border-left:1px solid var(--border-subtle);padding-left:16px}
+.pair .pw,.pair .pr{display:flex;flex-direction:column;gap:4px;font-family:var(--font-display);font-weight:600;font-size:14px;font-variant-numeric:tabular-nums lining-nums}
+.pair .pr{color:var(--content-secondary)}
+.pair span{white-space:nowrap}
+.pair::before,.pw::before,.pr::before{display:none}
+/* single-week cells */
 .ex-col{font-family:var(--font-display);font-weight:600;font-size:14px;color:var(--content-primary);
-  display:flex;flex-direction:column;line-height:1.3;font-variant-numeric:tabular-nums lining-nums}
+  display:flex;flex-direction:column;gap:4px;line-height:1.3;font-variant-numeric:tabular-nums lining-nums}
 .ex-col span{white-space:nowrap}
 .ex-col.rp{color:var(--content-secondary)}
-.ex-col .cur,.ex-col .prev{display:flex;flex-direction:column;gap:4px}
-.ex-col .prev{margin-top:7px;padding-top:7px;border-top:1px dashed var(--border-strong);
-  color:var(--content-tertiary);font-weight:600;opacity:.85}
 svg.mini{width:92px;height:28px;display:block}
 .delta{justify-self:end;font-weight:700;font-size:12px;border-radius:999px;padding:5px 10px;display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
 .delta .dv{font-family:var(--font-display);font-weight:800}
@@ -229,16 +245,32 @@ svg.mini{width:92px;height:28px;display:block}
 .exrow:hover .chev{color:var(--gold-deep)}
 @media(max-width:680px){
   .ex-thead{display:none}
-  .exrow-main{grid-template-columns:auto auto 1fr auto;
+  .cmp-bar{grid-template-columns:1fr 1fr;gap:10px;padding:14px 18px 13px}
+  .cmp-bar .cb-lab{display:none}
+  /* compare rows: two pairs stacked side by side under the name */
+  .ex-table:not(.single) .exrow-main{grid-template-columns:1fr 1fr;
+    grid-template-areas:"name name" "pa pb" "spark delta";
+    column-gap:14px;row-gap:14px;align-items:start;padding:16px 18px}
+  .ex-table:not(.single) .ex-name{grid-area:name;align-self:center;font-size:16px}
+  .ex-table:not(.single) .pair.pa{grid-area:pa;border:none;padding:0}
+  .ex-table:not(.single) .pair.pb{grid-area:pb;border:none;padding:0}
+  .ex-table:not(.single) .pair{grid-template-columns:minmax(0,1fr) 34px;gap:8px}
+  .ex-table:not(.single) .pair::before{display:block;grid-column:1/-1;content:attr(data-wk);font-weight:700;font-size:9px;letter-spacing:.05em;text-transform:uppercase;color:var(--gold-deep);margin-bottom:5px}
+  .ex-table:not(.single) .pair .pw::before{display:block;content:"Weight";font-family:var(--font-ui);font-weight:700;font-size:8px;letter-spacing:.04em;text-transform:uppercase;color:var(--content-tertiary);margin-bottom:4px}
+  .ex-table:not(.single) .pair .pr::before{display:block;content:"Reps";font-family:var(--font-ui);font-weight:700;font-size:8px;letter-spacing:.04em;text-transform:uppercase;color:var(--content-tertiary);margin-bottom:4px}
+  .ex-table:not(.single) svg.mini{grid-area:spark;justify-self:start;width:130px;height:28px;align-self:center}
+  .ex-table:not(.single) .delta{grid-area:delta;justify-self:end;align-self:center}
+  .ex-table:not(.single) .chev{display:none}
+  /* single rows keep the labeled single-column layout */
+  .ex-table.single .exrow-main{grid-template-columns:auto auto 1fr auto;
     grid-template-areas:"name name name chev" "wt rp delta delta" "spark spark spark spark";
     column-gap:26px;row-gap:13px;align-items:end;padding:16px 20px}
-  .ex-name{grid-area:name;align-self:center;font-size:16px}
-  .ex-col.wt{grid-area:wt}.ex-col.rp{grid-area:rp}
-  .ex-col::before{content:attr(data-lab);display:block;font-family:var(--font-ui);font-weight:700;font-size:9px;
-    letter-spacing:.1em;text-transform:uppercase;color:var(--content-tertiary);margin-bottom:5px}
-  .delta{grid-area:delta;justify-self:end;align-self:end;margin-bottom:2px}
-  svg.mini{grid-area:spark;justify-self:start;width:150px;height:30px}
-  .chev{grid-area:chev;align-self:center}
+  .ex-table.single .ex-name{grid-area:name;align-self:center;font-size:16px}
+  .ex-table.single .ex-col.wt{grid-area:wt}.ex-table.single .ex-col.rp{grid-area:rp}
+  .ex-table.single .ex-col::before{content:attr(data-lab);display:block;font-family:var(--font-ui);font-weight:700;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--content-tertiary);margin-bottom:5px}
+  .ex-table.single .delta{grid-area:delta;justify-self:end;align-self:end;margin-bottom:2px}
+  .ex-table.single svg.mini{grid-area:spark;justify-self:start;width:150px;height:30px}
+  .ex-table.single .chev{grid-area:chev;align-self:center}
 }
 /* small-screen polish */
 @media(max-width:560px){
@@ -1379,62 +1411,74 @@ const CHEV_CHECK="\u2713";
 function detailHTML(name){
   const s=DATA.sessions[name],st=sessionStats(name);
   const nW=s.weeks.length;
-  const wi=Math.max(0,Math.min(state.detailWeek==null?nW-1:state.detailWeek,nW-1));
-  const pi=wi-1;                       // previous week index (-1 if none)
+  const single = nW<2;
+  let a=state.weekA, b=state.weekB;
+  if(a==null||a<0||a>=nW) a=Math.max(0,nW-2);
+  if(b==null||b<0||b>=nW) b=nW-1;
   const stackW=arr=>arr.map(x=>`<span>${x[0]===0?'BW':fmtW(x[0])}</span>`).join('');
   const stackR=arr=>arr.map(x=>`<span>${x[1]}</span>`).join('');
-  const blocks=s.blocks.map(b=>{
-    const rows=b.exercises.map(e=>{
+  const wkStr=i=>`W${s.weeks[i].n} ${MID} ${fmtDay(s.weeks[i].date)}`;
+
+  const blocks=s.blocks.map(bl=>{
+    const rows=bl.exercises.map(e=>{
       const id='ex'+(exSeq++);EXREG[id]={ex:e,weeks:s.weeks};
-      const ser=exSeries(e);
-      const cur=e.byweek[wi].sets, prev=pi>=0?e.byweek[pi].sets:null;
-      const wcell=`<div class="cur">${stackW(cur)}</div>`+(prev?`<div class="prev">${stackW(prev)}</div>`:'');
-      const rcell=`<div class="cur">${stackR(cur)}</div>`+(prev?`<div class="prev">${stackR(prev)}</div>`:'');
-      // delta = selected week vs previous week
+      if(single){
+        const sets=e.byweek[0].sets;
+        return `<div class="exrow" data-ex="${id}">
+          <div class="exrow-main" data-toggle="${id}" role="button" tabindex="0" aria-label="Open ${e.name} chart">
+            <div class="ex-name">${e.name}</div>
+            <div class="ex-col wt" data-lab="Weight (kg)">${stackW(sets)}</div>
+            <div class="ex-col rp" data-lab="Reps">${stackR(sets)}</div>
+            ${miniSpark(exSeries(e))}<span class="delta new">new</span>
+            <span class="chev">${CHEV}</span>
+          </div></div>`;
+      }
+      const eA=bestSet(e.byweek[a]), eB=bestSet(e.byweek[b]);
+      // trend/delta computed from the two chosen columns (B relative to A)
       let d;
-      if(pi<0){d={t:'new'};}
-      else{const p=bestSet(e.byweek[pi]),l=bestSet(e.byweek[wi]);
-        if(!p||!l)d={t:'hold'};
-        else if(l.w>p.w)d={t:'up',x:`+${fmtW(l.w-p.w)}kg`};
-        else if(l.r>p.r&&l.w>=p.w)d={t:'up',x:`+${l.r-p.r} rep${l.r-p.r>1?'s':''}`};
-        else if(l.e>p.e+0.05)d={t:'up',x:'heavier'};
-        else if(l.e<p.e-0.05)d={t:'down',x:'lighter'};
-        else d={t:'hold'};}
-      const chip = d.t==='new'?`<span class="delta new">new</span>`
-        : d.t==='up'?`<span class="delta up"><span class="dv">${ARWU}</span> ${d.x}</span>`
+      if(!eA||!eB) d={t:'hold'};
+      else if(eB.w>eA.w) d={t:'up',x:`+${fmtW(eB.w-eA.w)}kg`};
+      else if(eB.r>eA.r&&eB.w>=eA.w) d={t:'up',x:`+${eB.r-eA.r} rep${eB.r-eA.r>1?'s':''}`};
+      else if(eB.e>eA.e+0.05) d={t:'up',x:'heavier'};
+      else if(eB.e<eA.e-0.05) d={t:'down',x:`\u2212${fmtW((eA.w-eB.w)||0)}kg`.replace('\u22120kg','lower')};
+      else d={t:'hold'};
+      const chip = d.t==='up'?`<span class="delta up"><span class="dv">${ARWU}</span> ${d.x}</span>`
         : d.t==='down'?`<span class="delta hold"><span class="dv">\u2193</span> ${d.x}</span>`
         : `<span class="delta hold">held</span>`;
+      const pair=(i,cls)=>`<div class="pair ${cls}" data-wk="${wkStr(i)}">
+          <div class="pw" data-lab="Weight (kg)">${stackW(e.byweek[i].sets)}</div>
+          <div class="pr" data-lab="Reps">${stackR(e.byweek[i].sets)}</div></div>`;
       return `<div class="exrow" data-ex="${id}">
         <div class="exrow-main" data-toggle="${id}" role="button" tabindex="0" aria-label="Open ${e.name} chart">
           <div class="ex-name">${e.name}</div>
-          <div class="ex-col wt" data-lab="Weight (kg)">${wcell}</div>
-          <div class="ex-col rp" data-lab="Reps">${rcell}</div>
-          ${miniSpark(ser,wi)}${chip}
+          ${pair(a,'pa')}${pair(b,'pb')}
+          ${miniSpark([eA?eA.e:0, eB?eB.e:0])}${chip}
           <span class="chev">${CHEV}</span>
         </div>
       </div>`;
     }).join('');
-    const ss=b.exercises.length>1?`<span class="ss">superset ${MID} ${b.exercises.length}</span>`:'';
+    const ss=bl.exercises.length>1?`<span class="ss">superset ${MID} ${bl.exercises.length}</span>`:'';
+    const thead = single
+      ? `<div class="ex-thead"><span>Exercise</span><span>Weight (kg)</span><span>Reps</span><span class="tcol">Trend</span><span></span><span></span></div>`
+      : `<div class="ex-thead"><span>Exercise</span>
+          <div class="pair-h"><span>Weight (kg)</span><span>Reps</span></div>
+          <div class="pair-h"><span>Weight (kg)</span><span>Reps</span></div>
+          <span class="tcol">Trend</span><span></span><span></span></div>`;
     return `<div class="block">
       <button class="block-head" data-blocktoggle aria-expanded="true">
-        <span class="block-lab"><span class="tick"></span>${b.label}${ss}</span>
+        <span class="block-lab"><span class="tick"></span>${bl.label}${ss}</span>
         <span class="block-chev">${CHEV}</span>
       </button>
-      <div class="block-body">
-        <div class="ex-thead"><span>Exercise</span><span>Weight (kg)</span><span>Reps</span><span class="tcol">Trend</span><span></span><span></span></div>
-        ${rows}
-      </div>
+      <div class="block-body">${thead}${rows}</div>
     </div>`;
   }).join('');
 
-  const weekOpts=s.weeks.map((w,i)=>`<option value="${i}"${i===wi?' selected':''}>Week ${w.n} ${MID} ${fmtDay(w.date)}</option>`).join('');
-  const picker = nW>1
-    ? `<div class="week-picker">
-        <label class="wp-lab">Showing</label>
-        <div class="wp-sel"><select id="weeksel" aria-label="Select week">${weekOpts}</select></div>
-        <span class="cmp">${pi>=0?`muted row = Week ${s.weeks[pi].n} ${MID} ${fmtDay(s.weeks[pi].date)}`:'first session logged'}</span>
-      </div>`
-    : `<div class="weekchips"><span class="wchip">W${s.weeks[0].n} ${MID} <b>${fmtDay(s.weeks[0].date)}</b></span></div>`;
+  const opts=(sel)=>s.weeks.map((w,i)=>`<option value="${i}"${i===sel?' selected':''}>${wkStr(i)}</option>`).join('');
+  const cmpBar = single ? '' : `<div class="cmp-bar">
+    <span class="cb-lab">Compare</span>
+    <div class="cb-sel"><select id="weekA" aria-label="Left column week">${opts(a)}</select></div>
+    <div class="cb-sel"><select id="weekB" aria-label="Right column week">${opts(b)}</select></div>
+  </div>`;
 
   return `<button class="backlink" id="back">${'\u2190'} All sessions</button>
     <div class="detail-head">
@@ -1442,7 +1486,7 @@ function detailHTML(name){
         <span class="eyebrow"><span class="tick"></span>Session progress</span>
         <h2>${name}<span class="gd">.</span></h2>
       </div>
-      ${picker}
+      <div class="weekchips">${s.weeks.map(w=>`<span class="wchip">W${w.n} ${MID} <b>${fmtDay(w.date)}</b></span>`).join('')}</div>
     </div>
     <div class="dstats">
       <div class="dstat"><div class="k">Times trained</div><div class="v nums">${st.times}</div></div>
@@ -1450,7 +1494,7 @@ function detailHTML(name){
       <div class="dstat"><div class="k">Exercises</div><div class="v nums">${st.ex}</div></div>
       <div class="dstat"><div class="k">Top lift</div><div class="v nums">${st.top?fmtW(st.top.w)+'kg':'\u2014'}</div></div>
     </div>
-    <div class="glass ex-table" style="margin-top:18px">${blocks}</div>
+    <div class="glass ex-table${single?' single':''}" style="margin-top:18px">${cmpBar}${blocks}</div>
     ${footerHTML()}`;
 }
 
@@ -1534,12 +1578,13 @@ function render(keepScroll){
   if(!keepScroll) window.scrollTo(0,0);
   app.innerHTML = state.session? detailHTML(state.session) : overviewHTML();
   if(state.session){
-    document.getElementById('back').onclick=()=>{state.session=null;state.detailWeek=null;render();};
-    const wsel=document.getElementById('weeksel');
-    if(wsel) wsel.onchange=e=>{state.detailWeek=+e.target.value;render(true);};
+    document.getElementById('back').onclick=()=>{state.session=null;state.weekA=null;state.weekB=null;render();};
+    const selA=document.getElementById('weekA'),selB=document.getElementById('weekB');
+    if(selA) selA.onchange=e=>{state.weekA=+e.target.value;render(true);};
+    if(selB) selB.onchange=e=>{state.weekB=+e.target.value;render(true);};
   }else{
     document.getElementById('seg').addEventListener('click',e=>{const b=e.target.closest('[data-scope]');if(!b)return;state.scope=b.dataset.scope;render();});
-    app.querySelectorAll('[data-open]').forEach(el=>el.addEventListener('click',()=>{state.session=el.dataset.open;state.detailWeek=null;render();}));
+    app.querySelectorAll('[data-open]').forEach(el=>el.addEventListener('click',()=>{state.session=el.dataset.open;state.weekA=null;state.weekB=null;render();}));
     initTilt();
   }
 }
