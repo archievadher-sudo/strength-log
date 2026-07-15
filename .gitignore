@@ -1,0 +1,11 @@
+.DS_Store
+__pycache__/
+*.pyc
+# raw RepCount exports (personal; regenerate tracker_data.json from these)
+export_*.csv
+*.csv
+# build artifacts
+*.woff2
+Training-Tracker.xlsx
+# superseded single-account deploy folder
+site/

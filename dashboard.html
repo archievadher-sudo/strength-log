@@ -1,0 +1,619 @@
+<title>Strength Log &mdash; GPP S&C</title>
+<style>
+  :root{
+    --paper:#F4F2EC; --panel:#FBFAF6; --ink:#1A1D23; --steel:#5C6B7A;
+    --line:#E4E0D6; --line2:#EDEAE1; --accent:#CF6524; --accent-soft:#F6E7D8;
+    --gain:#2E9E6B; --gain-soft:#E1F1E9; --hold:#8A96A2; --shadow:0 1px 2px rgba(26,29,35,.04),0 8px 24px rgba(26,29,35,.05);
+    --mono:"SF Mono",ui-monospace,"Roboto Mono",Menlo,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --paper:#111318; --panel:#181B21; --ink:#ECEEF1; --steel:#8A98A6;
+      --line:#262B33; --line2:#20242B; --accent:#E8813F; --accent-soft:#2A2018;
+      --gain:#38C48A; --gain-soft:#132821; --hold:#67717C; --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#111318; --panel:#181B21; --ink:#ECEEF1; --steel:#8A98A6;
+    --line:#262B33; --line2:#20242B; --accent:#E8813F; --accent-soft:#2A2018;
+    --gain:#38C48A; --gain-soft:#132821; --hold:#67717C; --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35);
+  }
+  :root[data-theme="light"]{
+    --paper:#F4F2EC; --panel:#FBFAF6; --ink:#1A1D23; --steel:#5C6B7A;
+    --line:#E4E0D6; --line2:#EDEAE1; --accent:#CF6524; --accent-soft:#F6E7D8;
+    --gain:#2E9E6B; --gain-soft:#E1F1E9; --hold:#8A96A2; --shadow:0 1px 2px rgba(26,29,35,.04),0 8px 24px rgba(26,29,35,.05);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+    -webkit-font-smoothing:antialiased;line-height:1.5;font-variant-numeric:tabular-nums}
+  .wrap{max-width:1120px;margin:0 auto;padding:32px 24px 72px}
+  .num{font-variant-numeric:tabular-nums}
+
+  /* header */
+  header.top{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;
+    padding-bottom:26px;border-bottom:2px solid var(--ink);margin-bottom:26px}
+  .brand-eyebrow{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);font-weight:700;margin-bottom:8px}
+  h1{font-size:clamp(30px,5vw,46px);line-height:1.02;margin:0;font-weight:800;letter-spacing:-.02em;text-wrap:balance}
+  .sub{color:var(--steel);font-size:14px;margin-top:10px}
+  .toggle{flex:none;border:1px solid var(--line);background:var(--panel);color:var(--ink);
+    border-radius:999px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;box-shadow:var(--shadow)}
+  .toggle:hover{border-color:var(--accent)}
+  .toggle:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  /* kpi row */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:34px}
+  .kpi{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow)}
+  .kpi .k-val{font-size:34px;font-weight:800;letter-spacing:-.03em;line-height:1}
+  .kpi .k-lab{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--steel);margin-top:9px;font-weight:600}
+  .kpi.accent .k-val{color:var(--accent)}
+  @media(max-width:720px){.kpis{grid-template-columns:repeat(2,1fr)}}
+
+  /* session */
+  section.session{margin-bottom:30px;background:var(--panel);border:1px solid var(--line);border-radius:16px;
+    overflow:hidden;box-shadow:var(--shadow)}
+  .sess-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+    padding:18px 22px;border-bottom:1px solid var(--line)}
+  .sess-head h2{margin:0;font-size:19px;font-weight:800;letter-spacing:-.01em}
+  .weekchips{display:flex;gap:6px;flex-wrap:wrap}
+  .wchip{font-size:11px;font-weight:600;color:var(--steel);background:var(--paper);border:1px solid var(--line);
+    border-radius:7px;padding:4px 9px;letter-spacing:.02em}
+  .wchip b{color:var(--ink)}
+
+  .block{padding:6px 22px 4px}
+  .block:not(:last-child){border-bottom:1px dashed var(--line)}
+  .block-lab{display:flex;align-items:center;gap:9px;font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--accent);font-weight:700;margin:16px 0 6px}
+  .block-lab .ss{color:var(--steel);font-weight:600;letter-spacing:.1em}
+  .block-lab .rule{flex:1;height:1px;background:var(--line)}
+
+  .exrow{display:grid;grid-template-columns:1.15fr 1.5fr 84px 92px;align-items:center;gap:14px;
+    padding:11px 0;border-top:1px solid var(--line2)}
+  .exrow:first-of-type{border-top:none}
+  .ex-name{font-weight:700;font-size:14.5px}
+  .ex-sets{font-family:var(--mono);font-size:12.5px;color:var(--steel);letter-spacing:-.01em}
+  .ex-sets .latest{color:var(--ink)}
+  svg.spark{width:84px;height:30px;display:block}
+  .delta{justify-self:end;font-size:12px;font-weight:700;border-radius:8px;padding:5px 9px;
+    display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+  .delta.up{color:var(--gain);background:var(--gain-soft)}
+  .delta.hold{color:var(--hold);background:transparent;border:1px solid var(--line)}
+  .delta.new{color:var(--accent);background:var(--accent-soft)}
+  @media(max-width:720px){
+    .exrow{grid-template-columns:1fr auto;grid-template-areas:"name delta" "sets spark";row-gap:6px}
+    .ex-name{grid-area:name}.ex-sets{grid-area:sets}svg.spark{grid-area:spark;justify-self:end}.delta{grid-area:delta}
+  }
+
+  /* runs */
+  .runs{margin-top:8px}
+  .runs h2{font-size:19px;font-weight:800;margin:0 0 4px}
+  .runs .rsub{color:var(--steel);font-size:13.5px;margin-bottom:16px}
+  .rungrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:640px){.rungrid{grid-template-columns:1fr}}
+  .runcard{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px;box-shadow:var(--shadow)}
+  .runcard .rtype{display:flex;align-items:center;gap:9px;font-weight:800;font-size:15px}
+  .dot{width:9px;height:9px;border-radius:50%}
+  .runcard .rdesc{color:var(--steel);font-size:13px;margin-top:7px}
+  .runcard .empty{margin-top:14px;font-size:12.5px;color:var(--hold);border-top:1px dashed var(--line);padding-top:12px;font-style:italic}
+
+  footer{margin-top:38px;padding-top:18px;border-top:1px solid var(--line);color:var(--steel);font-size:12px;line-height:1.7}
+  footer b{color:var(--ink)}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="brand-eyebrow">Strength &amp; Conditioning &middot; Week-by-week</div>
+      <h1>Strength Log</h1>
+      <div class="sub">GPP S&amp;C programme &middot; started 28 Jun 2026 &middot; reconstructed from RepCount, supersets restored</div>
+    </div>
+    <button class="toggle" id="tg" aria-label="Toggle colour theme">&#9680; Theme</button>
+  </header>
+
+  <div class="kpis" id="kpis"></div>
+  <div id="sessions"></div>
+
+  <section class="session runs" style="padding:20px 22px">
+    <h2>Runs</h2>
+    <div class="rsub">Two per week &mdash; track alongside the strength work.</div>
+    <div class="rungrid">
+      <div class="runcard">
+        <div class="rtype"><span class="dot" style="background:var(--accent)"></span>Sprint session</div>
+        <div class="rdesc">Short, high-intensity intervals. Track reps &times; distance, and recovery.</div>
+        <div class="empty">No sprint runs logged yet &mdash; add them in the Runs tab of the spreadsheet.</div>
+      </div>
+      <div class="runcard">
+        <div class="rtype"><span class="dot" style="background:var(--steel)"></span>Long / slow run</div>
+        <div class="rdesc">Steady aerobic distance. Track km, time, and average pace.</div>
+        <div class="empty">No long runs logged yet &mdash; pace auto-calculates once you enter distance + time.</div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <b>How to read a row:</b> the sparkline is top-set load across weeks; the chip shows change vs last week (&#9650; gain &middot; &mdash; held &middot; new).
+    Exercises inside a <b>Superset block</b> are done back-to-back.<br>
+    <b>Updating:</b> paste a new RepCount session or drop a fresh CSV export and this refreshes. Data cleaned: the <span style="font-family:var(--mono)">12.5&times;80</span> typo &rarr; &times;10; exercise names normalised so weeks align.
+  </footer>
+</div>
+
+<script>
+const DATA = {
+  "generated": null,
+  "start": "2026-06-28",
+  "sessions": {
+    "GPP S&C 1": {
+      "weeks": [
+        {
+          "n": 1,
+          "date": "2026-06-28"
+        },
+        {
+          "n": 2,
+          "date": "2026-07-14"
+        }
+      ],
+      "blocks": [
+        {
+          "label": "Prep",
+          "exercises": [
+            {
+              "name": "FFE split squat",
+              "byweek": [
+                {
+                  "cell": "5\u00d710",
+                  "top": 5.0,
+                  "vol": 50.0,
+                  "nsets": 1
+                },
+                {
+                  "cell": "5\u00d710",
+                  "top": 5.0,
+                  "vol": 50.0,
+                  "nsets": 1
+                }
+              ]
+            },
+            {
+              "name": "Prone T",
+              "byweek": [
+                {
+                  "cell": "5\u00d715",
+                  "top": 5.0,
+                  "vol": 75.0,
+                  "nsets": 1
+                },
+                {
+                  "cell": "5\u00d715",
+                  "top": 5.0,
+                  "vol": 75.0,
+                  "nsets": 1
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "label": "Block 1",
+          "exercises": [
+            {
+              "name": "Goblet squat",
+              "byweek": [
+                {
+                  "cell": "20\u00d78 \u00b7 20\u00d78 \u00b7 20\u00d78",
+                  "top": 20.0,
+                  "vol": 480.0,
+                  "nsets": 3
+                },
+                {
+                  "cell": "20\u00d78 \u00b7 22.5\u00d78 \u00b7 22.5\u00d78",
+                  "top": 22.5,
+                  "vol": 520.0,
+                  "nsets": 3
+                }
+              ]
+            },
+            {
+              "name": "Arnold press",
+              "byweek": [
+                {
+                  "cell": "12.5\u00d78 \u00b7 12.5\u00d78 \u00b7 12.5\u00d78",
+                  "top": 12.5,
+                  "vol": 300.0,
+                  "nsets": 3
+                },
+                {
+                  "cell": "12.5\u00d78 \u00b7 12.5\u00d78 \u00b7 12.5\u00d78",
+                  "top": 12.5,
+                  "vol": 300.0,
+                  "nsets": 3
+                }
+              ]
+            },
+            {
+              "name": "Push-up shoulder tap",
+              "byweek": [
+                {
+                  "cell": "BW\u00d76 \u00b7 BW\u00d76 \u00b7 BW\u00d76",
+                  "top": 0.0,
+                  "vol": 0.0,
+                  "nsets": 3
+                },
+                {
+                  "cell": "BW\u00d76 \u00b7 BW\u00d76 \u00b7 BW\u00d76",
+                  "top": 0.0,
+                  "vol": 0.0,
+                  "nsets": 3
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "label": "Block 2",
+          "exercises": [
+            {
+              "name": "B-stance RDL",
+              "byweek": [
+                {
+                  "cell": "12.5\u00d78 \u00b7 12.5\u00d78",
+                  "top": 12.5,
+                  "vol": 200.0,
+                  "nsets": 2
+                },
+                {
+                  "cell": "12.5\u00d78 \u00b7 15\u00d78",
+                  "top": 15.0,
+                  "vol": 220.0,
+                  "nsets": 2
+                }
+              ]
+            },
+            {
+              "name": "Seated cable press",
+              "byweek": [
+                {
+                  "cell": "18\u00d710 \u00b7 18\u00d710",
+                  "top": 18.0,
+                  "vol": 360.0,
+                  "nsets": 2
+                },
+                {
+                  "cell": "18\u00d710 \u00b7 18\u00d710",
+                  "top": 18.0,
+                  "vol": 360.0,
+                  "nsets": 2
+                }
+              ]
+            },
+            {
+              "name": "1-arm 3-point row",
+              "byweek": [
+                {
+                  "cell": "12.5\u00d710 \u00b7 12.5\u00d710",
+                  "top": 12.5,
+                  "vol": 250.0,
+                  "nsets": 2
+                },
+                {
+                  "cell": "12.5\u00d710 \u00b7 12.5\u00d710",
+                  "top": 12.5,
+                  "vol": 250.0,
+                  "nsets": 2
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "label": "Block 3",
+          "exercises": [
+            {
+              "name": "Frontal plane lunge",
+              "byweek": [
+                {
+                  "cell": "12.5\u00d710 \u00b7 12.5\u00d710",
+                  "top": 12.5,
+                  "vol": 250.0,
+                  "nsets": 2
+                },
+                {
+                  "cell": "12.5\u00d710 \u00b7 12.5\u00d710",
+                  "top": 12.5,
+                  "vol": 250.0,
+                  "nsets": 2
+                }
+              ]
+            },
+            {
+              "name": "Iso split squat",
+              "byweek": [
+                {
+                  "cell": "10\u00d710 \u00b7 10\u00d710",
+                  "top": 10.0,
+                  "vol": 200.0,
+                  "nsets": 2
+                },
+                {
+                  "cell": "10\u00d710 \u00b7 10\u00d710",
+                  "top": 10.0,
+                  "vol": 200.0,
+                  "nsets": 2
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "label": "Block 4",
+          "exercises": [
+            {
+              "name": "Incline tension curl",
+              "byweek": [
+                {
+                  "cell": "12.5\u00d712 \u00b7 12.5\u00d712",
+                  "top": 12.5,
+                  "vol": 300.0,
+                  "nsets": 2
+                },
+                {
+                  "cell": "12.5\u00d712 \u00b7 12.5\u00d712",
+                  "top": 12.5,
+                  "vol": 300.0,
+                  "nsets": 2
+                }
+              ]
+            },
+            {
+              "name": "Lying tricep extension",
+              "byweek": [
+                {
+                  "cell": "10\u00d712 \u00b7 10\u00d712",
+                  "top": 10.0,
+                  "vol": 240.0,
+                  "nsets": 2
+                },
+                {
+                  "cell": "10\u00d712 \u00b7 12.5\u00d712",
+                  "top": 12.5,
+                  "vol": 270.0,
+                  "nsets": 2
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "GPP S&C 2": {
+      "weeks": [
+        {
+          "n": 1,
+          "date": "2026-07-08"
+        }
+      ],
+      "blocks": [
+        {
+          "label": "Prep",
+          "exercises": [
+            {
+              "name": "Single-leg hip raise",
+              "byweek": [
+                {
+                  "cell": "BW\u00d710",
+                  "top": 0.0,
+                  "vol": 0.0,
+                  "nsets": 1
+                }
+              ]
+            },
+            {
+              "name": "Cable cross-back",
+              "byweek": [
+                {
+                  "cell": "6\u00d715",
+                  "top": 6.0,
+                  "vol": 90.0,
+                  "nsets": 1
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "label": "Block 1",
+          "exercises": [
+            {
+              "name": "RDL",
+              "byweek": [
+                {
+                  "cell": "60\u00d78 \u00b7 75\u00d78 \u00b7 77.5\u00d78",
+                  "top": 77.5,
+                  "vol": 1700.0,
+                  "nsets": 3
+                }
+              ]
+            },
+            {
+              "name": "Single-arm overhead press",
+              "byweek": [
+                {
+                  "cell": "17.5\u00d75 \u00b7 17.5\u00d75 \u00b7 17.5\u00d75",
+                  "top": 17.5,
+                  "vol": 262.5,
+                  "nsets": 3
+                }
+              ]
+            },
+            {
+              "name": "Deadbug",
+              "byweek": [
+                {
+                  "cell": "10\u00d710 \u00b7 10\u00d710 \u00b7 10\u00d710",
+                  "top": 10.0,
+                  "vol": 300.0,
+                  "nsets": 3
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "label": "Block 2",
+          "exercises": [
+            {
+              "name": "Split squat",
+              "byweek": [
+                {
+                  "cell": "12.5\u00d78 \u00b7 15\u00d78",
+                  "top": 15.0,
+                  "vol": 220.0,
+                  "nsets": 2
+                }
+              ]
+            },
+            {
+              "name": "Floor chest press",
+              "byweek": [
+                {
+                  "cell": "22.5\u00d710 \u00b7 25\u00d710",
+                  "top": 25.0,
+                  "vol": 475.0,
+                  "nsets": 2
+                }
+              ]
+            },
+            {
+              "name": "Dumbbell row (bench)",
+              "byweek": [
+                {
+                  "cell": "12.5\u00d710 \u00b7 12.5\u00d710",
+                  "top": 12.5,
+                  "vol": 250.0,
+                  "nsets": 2
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "label": "Block 3",
+          "exercises": [
+            {
+              "name": "Seated DB lateral raise",
+              "byweek": [
+                {
+                  "cell": "7.5\u00d712 \u00b7 7.5\u00d712",
+                  "top": 7.5,
+                  "vol": 180.0,
+                  "nsets": 2
+                }
+              ]
+            },
+            {
+              "name": "Seated DB curl-to-press",
+              "byweek": [
+                {
+                  "cell": "10\u00d79 \u00b7 10\u00d78",
+                  "top": 10.0,
+                  "vol": 170.0,
+                  "nsets": 2
+                }
+              ]
+            },
+            {
+              "name": "Tricep pushdown (rope)",
+              "byweek": [
+                {
+                  "cell": "24\u00d712 \u00b7 30\u00d712",
+                  "top": 30.0,
+                  "vol": 648.0,
+                  "nsets": 2
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+};
+
+function metricOf(wk){ // choose kg top-set, else reps of top set
+  if(wk.top>0) return {v:wk.top,unit:"kg"};
+  const m=(wk.cell.match(/\u00d7(\d+)/g)||[]).map(s=>+s.slice(1));
+  return {v:Math.max(0,...m),unit:"reps"};
+}
+function spark(series){
+  const w=84,h=30,pad=4;
+  const vals=series.map(s=>s.v);
+  const mn=Math.min(...vals),mx=Math.max(...vals);
+  const n=vals.length;
+  const x=i=> n===1? w/2 : pad+(i*(w-2*pad))/(n-1);
+  const y=v=> mx===mn? h/2 : (h-pad)-((v-mn)/(mx-mn))*(h-2*pad);
+  let path="",pts="";
+  series.forEach((s,i)=>{ path+=(i?"L":"M")+x(i).toFixed(1)+" "+y(s.v).toFixed(1)+" ";
+    pts+=`<circle cx="${x(i).toFixed(1)}" cy="${y(s.v).toFixed(1)}" r="${i===n-1?3:2}" fill="${i===n-1?'var(--accent)':'var(--hold)'}"/>`;});
+  const line=n>1?`<path d="${path}" fill="none" stroke="var(--steel)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" opacity=".8"/>`:"";
+  return `<svg class="spark" viewBox="0 0 ${w} ${h}">${line}${pts}</svg>`;
+}
+function deltaChip(series){
+  if(series.length<2) return `<span class="delta new">new</span>`;
+  const a=series[series.length-2].v, b=series[series.length-1].v, u=series[series.length-1].unit;
+  const d=+(b-a).toFixed(1);
+  if(d>0) return `<span class="delta up">\u25b2 +${d}${u==='kg'?'kg':' rep'+(d>1?'s':'')}</span>`;
+  if(d<0) return `<span class="delta hold">\u25bc ${d}${u==='kg'?'kg':''}</span>`;
+  return `<span class="delta hold">\u2014 held</span>`;
+}
+
+// KPIs
+let totalSets=0, prs=0, weeksMax=0, instances=0;
+for(const s of Object.values(DATA.sessions)){
+  instances+=s.weeks.length; weeksMax=Math.max(weeksMax,s.weeks.length);
+  for(const b of s.blocks) for(const e of b.exercises){
+    e.byweek.forEach(w=>totalSets+=w.nsets);
+    const ser=e.byweek.map(metricOf);
+    if(ser.length>=2 && ser[ser.length-1].v>ser[ser.length-2].v) prs++;
+  }
+}
+const kpis=[
+  {v:instances,l:"Sessions logged"},
+  {v:Object.keys(DATA.sessions).length+"/3",l:"S&C variants seen"},
+  {v:totalSets,l:"Working sets"},
+  {v:prs,l:"Progressions logged",accent:true},
+];
+document.getElementById('kpis').innerHTML=kpis.map(k=>
+  `<div class="kpi ${k.accent?'accent':''}"><div class="k-val num">${k.v}</div><div class="k-lab">${k.l}</div></div>`).join('');
+
+// sessions
+const fmtD=iso=>{const[,m,d]=iso.split('-');const M=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];return d+' '+M[+m-1];};
+document.getElementById('sessions').innerHTML=Object.entries(DATA.sessions).map(([name,s])=>{
+  const chips=s.weeks.map(w=>`<span class="wchip">W${w.n} \u00b7 <b>${fmtD(w.date)}</b></span>`).join('');
+  const blocks=s.blocks.map(b=>{
+    const rows=b.exercises.map(e=>{
+      const ser=e.byweek.map(metricOf);
+      const latest=e.byweek[e.byweek.length-1].cell;
+      return `<div class="exrow">
+        <div class="ex-name">${e.name}</div>
+        <div class="ex-sets"><span class="latest">${latest}</span></div>
+        ${spark(ser)}
+        ${deltaChip(ser)}
+      </div>`;
+    }).join('');
+    const isSS=b.exercises.length>1;
+    return `<div class="block">
+      <div class="block-lab">${b.label}${isSS?` <span class="ss">\u00b7 superset \u00d7${b.exercises.length}</span>`:''}<span class="rule"></span></div>
+      ${rows}</div>`;
+  }).join('');
+  return `<section class="session">
+    <div class="sess-head"><h2>${name}</h2><div class="weekchips">${chips}</div></div>
+    ${blocks}</section>`;
+}).join('');
+
+// theme toggle
+const root=document.documentElement, tg=document.getElementById('tg');
+tg.addEventListener('click',()=>{
+  const cur=root.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
+  root.setAttribute('data-theme',cur==='dark'?'light':'dark');
+});
+</script>
