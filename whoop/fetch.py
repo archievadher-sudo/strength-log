@@ -14,7 +14,7 @@ NOTE: refresh tokens ROTATE — every refresh invalidates the old one. We write
 new_refresh_token.txt immediately after refreshing so the workflow can persist
 it even if a later fetch step fails.
 """
-import os, json, urllib.parse, urllib.request, urllib.error
+import os, json, datetime, urllib.parse, urllib.request, urllib.error
 
 BASE      = "https://api.prod.whoop.com/developer/v2"
 TOKEN_URL = "https://api.prod.whoop.com/oauth/oauth2/token"
@@ -69,7 +69,7 @@ def main():
         params["start"] = os.environ["WHOOP_START"] + "T00:00:00.000Z"
 
     data = {
-        "fetched": None,  # stamped by the workflow (Date is unavailable here by design)
+        "fetched": datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%MZ"),
         "recovery":  get_all(access, "/recovery", params),
         "sleep":     get_all(access, "/activity/sleep", params),
         "cycle":     get_all(access, "/cycle", params),

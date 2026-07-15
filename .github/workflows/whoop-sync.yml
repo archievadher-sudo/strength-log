@@ -31,7 +31,12 @@ jobs:
           WHOOP_CLIENT_ID: ${{ secrets.WHOOP_CLIENT_ID }}
           WHOOP_CLIENT_SECRET: ${{ secrets.WHOOP_CLIENT_SECRET }}
           WHOOP_REFRESH_TOKEN: ${{ secrets.WHOOP_REFRESH_TOKEN }}
-        run: python3 whoop/fetch.py
+        run: |
+          if [ -z "$WHOOP_CLIENT_ID" ]; then
+            echo "WHOOP secrets not configured yet — skipping (add them, then re-run)."
+            echo "skipped=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          python3 whoop/fetch.py
 
       # Persist the rotated refresh token even if the fetch step failed midway
       # (fetch.py writes new_refresh_token.txt immediately after refreshing).
@@ -48,18 +53,8 @@ jobs:
             echo "no new token to save"
           fi
 
-      - name: Stamp fetch time
-        if: steps.fetch.outcome == 'success'
-        run: |
-          python3 - <<'PY'
-          import json, datetime
-          p="docs/whoop_data.json"
-          d=json.load(open(p)); d["fetched"]=datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%MZ")
-          json.dump(d, open(p,"w"))
-          PY
-
       - name: Commit if changed
-        if: steps.fetch.outcome == 'success'
+        if: steps.fetch.outputs.skipped != 'true' && hashFiles('docs/whoop_data.json') != ''
         run: |
           git config user.name  "whoop-sync[bot]"
           git config user.email "whoop-sync@users.noreply.github.com"
