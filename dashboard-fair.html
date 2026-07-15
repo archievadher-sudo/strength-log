@@ -99,6 +99,14 @@ main{padding:28px 0 72px}
 .hero::before,.hero::after{content:"";position:absolute;border-radius:999px;filter:blur(64px);pointer-events:none;z-index:0}
 .hero::before{width:340px;height:340px;background:rgba(212,160,67,.34);top:-120px;right:-60px}
 .hero::after{width:260px;height:260px;background:rgba(248,237,199,.14);bottom:-90px;left:6%}
+[data-theme="dark"] .hero{
+  background:radial-gradient(135% 150% at 80% -18%,rgba(232,197,120,.20) 0%,transparent 52%),linear-gradient(150deg,#1F180E 0%,#14100A 55%,#0C0A07 100%);
+  border:1px solid rgba(212,160,67,.14);
+  box-shadow:0 2px 4px rgba(0,0,0,.5),0 24px 60px rgba(0,0,0,.5),0 2px 14px rgba(212,160,67,.1),inset 0 1px 0 rgba(255,255,255,.05)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .hero{
+  background:radial-gradient(135% 150% at 80% -18%,rgba(232,197,120,.20) 0%,transparent 52%),linear-gradient(150deg,#1F180E 0%,#14100A 55%,#0C0A07 100%);
+  border:1px solid rgba(212,160,67,.14);
+  box-shadow:0 2px 4px rgba(0,0,0,.5),0 24px 60px rgba(0,0,0,.5),0 2px 14px rgba(212,160,67,.1),inset 0 1px 0 rgba(255,255,255,.05)}}
 .hero>*{position:relative;z-index:1}
 .hero-top{display:grid;grid-template-columns:1fr auto;align-items:end;gap:32px}
 .hero-eyebrow{font-weight:600;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:rgba(250,247,240,.62);display:flex;align-items:center;gap:9px}
@@ -164,6 +172,18 @@ main{padding:28px 0 72px}
 .detail-head{margin:14px 0 4px;display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
 .detail-head h2{font-family:var(--font-display);font-weight:800;font-size:32px;letter-spacing:-.025em;margin:8px 0 0}
 .weekchips{display:flex;gap:6px;flex-wrap:wrap}
+.week-picker{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.week-picker .wp-lab{font-weight:600;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--content-tertiary)}
+.week-picker .wp-sel{position:relative;display:inline-flex}
+.week-picker select{font-family:var(--font-display);font-weight:700;font-size:14px;color:var(--content-primary);
+  background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:12px;
+  padding:9px 36px 9px 14px;cursor:pointer;-webkit-appearance:none;appearance:none;box-shadow:var(--elevation-1);
+  -webkit-backdrop-filter:blur(16px) saturate(180%);backdrop-filter:blur(16px) saturate(180%);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238B6914' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 13px center}
+.week-picker select:hover{border-color:var(--gold)}
+.week-picker select:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.week-picker .cmp{font-size:12px;color:var(--content-tertiary)}
 .wchip{font-size:11px;font-weight:600;color:var(--content-tertiary);background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:999px;padding:5px 11px}
 .wchip b{color:var(--content-primary);font-family:var(--font-display);font-weight:700}
 .dstats{display:flex;gap:26px;flex-wrap:wrap;margin-top:2px}
@@ -193,9 +213,12 @@ main{padding:28px 0 72px}
 .exrow-main:hover{background:rgba(212,160,67,.05)}
 .ex-name{font-weight:600;font-size:15px}
 .ex-col{font-family:var(--font-display);font-weight:600;font-size:14px;color:var(--content-primary);
-  display:flex;flex-direction:column;gap:4px;line-height:1.3;font-variant-numeric:tabular-nums lining-nums}
+  display:flex;flex-direction:column;line-height:1.3;font-variant-numeric:tabular-nums lining-nums}
 .ex-col span{white-space:nowrap}
 .ex-col.rp{color:var(--content-secondary)}
+.ex-col .cur,.ex-col .prev{display:flex;flex-direction:column;gap:4px}
+.ex-col .prev{margin-top:7px;padding-top:7px;border-top:1px dashed var(--border-strong);
+  color:var(--content-tertiary);font-weight:600;opacity:.85}
 svg.mini{width:92px;height:28px;display:block}
 .delta{justify-self:end;font-weight:700;font-size:12px;border-radius:999px;padding:5px 10px;display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
 .delta .dv{font-family:var(--font-display);font-weight:800}
@@ -1186,13 +1209,14 @@ const state={scope:'all',session:null};
 const app=document.getElementById('app');
 
 /* ---------- sparkline (mini) ---------- */
-function miniSpark(series){
+function miniSpark(series, hi){
   const w=92,h=28,p=4,n=series.length,mn=Math.min(...series),mx=Math.max(...series);
+  const H = hi==null? n-1 : hi;
   const x=i=> n===1? w/2 : p+i*(w-2*p)/(n-1);
   const y=v=> mx===mn? h/2 : (h-p)-((v-mn)/(mx-mn))*(h-2*p);
   let d="",dots="";
   series.forEach((v,i)=>{d+=(i?'L':'M')+x(i).toFixed(1)+' '+y(v).toFixed(1)+' ';
-    const last=i===n-1;dots+=`<circle cx="${x(i).toFixed(1)}" cy="${y(v).toFixed(1)}" r="${last?3:2}" fill="${last?'var(--gold-deep)':'var(--border-strong)'}"/>`;});
+    const on=i===H;dots+=`<circle cx="${x(i).toFixed(1)}" cy="${y(v).toFixed(1)}" r="${on?3:2}" fill="${on?'var(--gold-deep)':'var(--border-strong)'}"/>`;});
   const line=n>1?`<path d="${d}" fill="none" stroke="var(--gold)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>`:'';
   return `<svg class="mini" viewBox="0 0 ${w} ${h}">${line}${dots}</svg>`;
 }
@@ -1354,14 +1378,28 @@ const CHEV_CHECK="\u2713";
 /* ---------- DETAIL ---------- */
 function detailHTML(name){
   const s=DATA.sessions[name],st=sessionStats(name);
-  const chips=s.weeks.map(w=>`<span class="wchip">W${w.n} ${MID} <b>${fmtDay(w.date)}</b></span>`).join('');
+  const nW=s.weeks.length;
+  const wi=Math.max(0,Math.min(state.detailWeek==null?nW-1:state.detailWeek,nW-1));
+  const pi=wi-1;                       // previous week index (-1 if none)
+  const stackW=arr=>arr.map(x=>`<span>${x[0]===0?'BW':fmtW(x[0])}</span>`).join('');
+  const stackR=arr=>arr.map(x=>`<span>${x[1]}</span>`).join('');
   const blocks=s.blocks.map(b=>{
     const rows=b.exercises.map(e=>{
       const id='ex'+(exSeq++);EXREG[id]={ex:e,weeks:s.weeks};
-      const ser=exSeries(e),d=exDelta(e);
-      const sets=e.byweek[e.byweek.length-1].sets;
-      const wcol=sets.map(x=>`<span>${x[0]===0?'BW':fmtW(x[0])}</span>`).join('');
-      const rcol=sets.map(x=>`<span>${x[1]}</span>`).join('');
+      const ser=exSeries(e);
+      const cur=e.byweek[wi].sets, prev=pi>=0?e.byweek[pi].sets:null;
+      const wcell=`<div class="cur">${stackW(cur)}</div>`+(prev?`<div class="prev">${stackW(prev)}</div>`:'');
+      const rcell=`<div class="cur">${stackR(cur)}</div>`+(prev?`<div class="prev">${stackR(prev)}</div>`:'');
+      // delta = selected week vs previous week
+      let d;
+      if(pi<0){d={t:'new'};}
+      else{const p=bestSet(e.byweek[pi]),l=bestSet(e.byweek[wi]);
+        if(!p||!l)d={t:'hold'};
+        else if(l.w>p.w)d={t:'up',x:`+${fmtW(l.w-p.w)}kg`};
+        else if(l.r>p.r&&l.w>=p.w)d={t:'up',x:`+${l.r-p.r} rep${l.r-p.r>1?'s':''}`};
+        else if(l.e>p.e+0.05)d={t:'up',x:'heavier'};
+        else if(l.e<p.e-0.05)d={t:'down',x:'lighter'};
+        else d={t:'hold'};}
       const chip = d.t==='new'?`<span class="delta new">new</span>`
         : d.t==='up'?`<span class="delta up"><span class="dv">${ARWU}</span> ${d.x}</span>`
         : d.t==='down'?`<span class="delta hold"><span class="dv">\u2193</span> ${d.x}</span>`
@@ -1369,9 +1407,9 @@ function detailHTML(name){
       return `<div class="exrow" data-ex="${id}">
         <div class="exrow-main" data-toggle="${id}" role="button" tabindex="0" aria-label="Open ${e.name} chart">
           <div class="ex-name">${e.name}</div>
-          <div class="ex-col wt" data-lab="Weight (kg)">${wcol}</div>
-          <div class="ex-col rp" data-lab="Reps">${rcol}</div>
-          ${miniSpark(ser)}${chip}
+          <div class="ex-col wt" data-lab="Weight (kg)">${wcell}</div>
+          <div class="ex-col rp" data-lab="Reps">${rcell}</div>
+          ${miniSpark(ser,wi)}${chip}
           <span class="chev">${CHEV}</span>
         </div>
       </div>`;
@@ -1389,13 +1427,22 @@ function detailHTML(name){
     </div>`;
   }).join('');
 
+  const weekOpts=s.weeks.map((w,i)=>`<option value="${i}"${i===wi?' selected':''}>Week ${w.n} ${MID} ${fmtDay(w.date)}</option>`).join('');
+  const picker = nW>1
+    ? `<div class="week-picker">
+        <label class="wp-lab">Showing</label>
+        <div class="wp-sel"><select id="weeksel" aria-label="Select week">${weekOpts}</select></div>
+        <span class="cmp">${pi>=0?`muted row = Week ${s.weeks[pi].n} ${MID} ${fmtDay(s.weeks[pi].date)}`:'first session logged'}</span>
+      </div>`
+    : `<div class="weekchips"><span class="wchip">W${s.weeks[0].n} ${MID} <b>${fmtDay(s.weeks[0].date)}</b></span></div>`;
+
   return `<button class="backlink" id="back">${'\u2190'} All sessions</button>
     <div class="detail-head">
       <div>
         <span class="eyebrow"><span class="tick"></span>Session progress</span>
         <h2>${name}<span class="gd">.</span></h2>
       </div>
-      <div class="weekchips">${chips}</div>
+      ${picker}
     </div>
     <div class="dstats">
       <div class="dstat"><div class="k">Times trained</div><div class="v nums">${st.times}</div></div>
@@ -1483,14 +1530,16 @@ function initScrub(id){
 }
 
 /* ---------- render + events ---------- */
-function render(){
-  window.scrollTo(0,0);
+function render(keepScroll){
+  if(!keepScroll) window.scrollTo(0,0);
   app.innerHTML = state.session? detailHTML(state.session) : overviewHTML();
   if(state.session){
-    document.getElementById('back').onclick=()=>{state.session=null;render();};
+    document.getElementById('back').onclick=()=>{state.session=null;state.detailWeek=null;render();};
+    const wsel=document.getElementById('weeksel');
+    if(wsel) wsel.onchange=e=>{state.detailWeek=+e.target.value;render(true);};
   }else{
     document.getElementById('seg').addEventListener('click',e=>{const b=e.target.closest('[data-scope]');if(!b)return;state.scope=b.dataset.scope;render();});
-    app.querySelectorAll('[data-open]').forEach(el=>el.addEventListener('click',()=>{state.session=el.dataset.open;render();}));
+    app.querySelectorAll('[data-open]').forEach(el=>el.addEventListener('click',()=>{state.session=el.dataset.open;state.detailWeek=null;render();}));
     initTilt();
   }
 }
