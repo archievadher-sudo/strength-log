@@ -205,11 +205,11 @@ main{padding:28px 0 72px}
 .block-body{overflow:hidden;max-height:1600px;transition:max-height .34s var(--ease),opacity .24s var(--ease)}
 .block.collapsed .block-body{max-height:0;opacity:0}
 
-.ex-table{--exg:minmax(150px,1.25fr) minmax(0,1fr) minmax(0,1fr) 86px 92px 22px}
+.ex-table{--exg:minmax(150px,1fr) 132px 132px 84px 90px 22px}
 .ex-table.single{--exg:minmax(150px,1.3fr) 96px 60px 86px 92px 22px}
-.ex-table.runs{--exg:minmax(120px,1.15fr) 1fr 1fr 1fr}
-.exrow-main.static{cursor:default}
-.exrow-main.static:hover{background:none}
+.ex-table.runsess.single{--exg:minmax(140px,1fr) 118px 110px 86px 90px 22px}
+.ex-table.runsess:not(.single){--exg:minmax(140px,1fr) 132px 132px 84px 90px 22px}
+.ex-table.runsess .pair,.ex-table.runsess .pair-h{grid-template-columns:64px 40px}
 .dstat .v .u{font-family:var(--font-ui);font-weight:600;font-size:12px;color:var(--content-tertiary);margin-left:3px}
 .cmp-bar,.ex-thead,.exrow-main{display:grid;grid-template-columns:var(--exg);align-items:center;gap:16px}
 .cmp-bar{padding:14px 24px 13px;border-bottom:1px solid var(--border-div)}
@@ -228,10 +228,13 @@ main{padding:28px 0 72px}
 .exrow-main:hover{background:rgba(212,160,67,.05)}
 .ex-name{font-weight:600;font-size:15px}
 /* two-week compare pairs */
-.pair,.pair-h{display:grid;grid-template-columns:minmax(0,1fr) 40px;gap:12px;align-items:start}
-.pair.pb,.ex-thead .pair-h+.pair-h{border-left:1px solid var(--border-subtle);padding-left:16px}
+.pair,.pair-h{display:grid;grid-template-columns:84px 28px;gap:12px;align-items:start;justify-content:start}
+.pair.pb,.ex-thead .pair-h+.pair-h{border-left:1px solid var(--border-subtle);padding-left:20px}
 .pair .pw,.pair .pr{display:flex;flex-direction:column;gap:4px;font-family:var(--font-display);font-weight:600;font-size:14px;font-variant-numeric:tabular-nums lining-nums}
+.pair .pw{align-items:flex-end}   /* weight right-aligned so it hugs its reps */
 .pair .pr{color:var(--content-secondary)}
+.ex-thead .pair-h span{white-space:nowrap}
+.ex-thead .pair-h span:first-child{text-align:right}
 .pair span{white-space:nowrap}
 .pair::before,.pw::before,.pr::before{display:none}
 /* single-week cells */
@@ -275,11 +278,6 @@ svg.mini{width:92px;height:28px;display:block}
   .ex-table.single .delta{grid-area:delta;justify-self:end;align-self:end;margin-bottom:2px}
   .ex-table.single svg.mini{grid-area:spark;justify-self:start;width:150px;height:30px}
   .ex-table.single .chev{grid-area:chev;align-self:center}
-  /* runs table */
-  .ex-table.runs .exrow-main{grid-template-columns:1fr 1fr 1fr;grid-template-areas:"name name name" "cd ct cs";column-gap:14px;row-gap:12px;align-items:start;padding:16px 18px}
-  .ex-table.runs .ex-name{grid-area:name;align-self:center;font-size:15px}
-  .ex-table.runs .c-d{grid-area:cd}.ex-table.runs .c-t{grid-area:ct}.ex-table.runs .c-s{grid-area:cs}
-  .ex-table.runs .ex-col::before{content:attr(data-lab);display:block;font-family:var(--font-ui);font-weight:700;font-size:8.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--content-tertiary);margin-bottom:4px}
 }
 /* small-screen polish */
 @media(max-width:560px){
@@ -1245,7 +1243,12 @@ for(const[name,s]of Object.entries(DATA.sessions)){const st=sessionStats(name);t
 if(OCC.length){const last=OCC[OCC.length-1];const s=DATA.sessions[last.name];
   for(const b of s.blocks)for(const e of b.exercises)if(exUp(e))latestUp++;}
 
-const EXREG={}; let exSeq=0;
+const EXREG={},RUNREG={},GEOM={}; let exSeq=0;
+/* group runs by type -> session-like objects (each run = a "week") */
+const RUN_SESS={};
+RUNS.forEach(r=>{(RUN_SESS[r.type]||(RUN_SESS[r.type]={type:r.type,runs:[]})).runs.push(r);});
+Object.values(RUN_SESS).forEach(rs=>rs.runs.sort((a,b)=>a.date<b.date?-1:1));
+const RUN_LABEL={sprint:'Sprint session',long:'Long / slow run'};
 const state={scope:'all',session:null};
 const app=document.getElementById('app');
 
@@ -1398,10 +1401,10 @@ function overviewHTML(){
     }
     const reps=rn.intervals.length, per=rn.intervals[0].dist_m;
     const shape = reps>1 ? `${reps} ${X} ${fmtDist(per)}` : fmtDist(rn.total_dist_m);
-    return `<div class="glass tile done" data-run="${rn.idx}" data-tilt>
+    return `<div class="glass tile done" data-runtype="${rn.type}" data-tilt>
       <div class="tile-top"><span class="tile-name" style="font-size:18px">${rt.label}</span><span class="tag done">${CHEV_CHECK} Done</span></div>
       <div class="tile-meta">${fmtDay(rn.date)} ${MID} ${shape}</div>
-      <div class="tile-foot"><span class="big nums">${fmtDist(rn.total_dist_m)} <small>${rn.avg_kmph} km/h</small></span><span class="tile-go">Details ${CHEV}</span></div>
+      <div class="tile-foot"><span class="big nums">${fmtDist(rn.total_dist_m)} <small>${rn.avg_kmph} km/h</small></span><span class="tile-go">Progress ${CHEV}</span></div>
       <div style="margin-top:12px"><span class="prpill" style="color:var(--gold-deep);background:var(--gold-pale)">${fmtPace(rn.pace_s_per_km)} /km</span></div>
     </div>`;
   }).join('');
@@ -1508,22 +1511,16 @@ function detailHTML(name){
 }
 
 /* ---------- EXPANDED CHART (Fair line chart + scrub) ---------- */
-function buildChart(id){
-  const {ex,weeks}=EXREG[id];
-  const isBW = ex.byweek.every(w=>(w.sets||[]).every(s=>s[0]===0));
-  const pts=ex.byweek.map((wk,i)=>{const b=bestSet(wk);return{
-    i, date:weeks[i].date, n:weeks[i].n,
-    label: b? (b.w>0? `${fmtW(b.w)} kg ${MID} ${b.r} reps` : `BW ${MID} ${b.r} reps`) : '\u2014',
-    e1: b? b.e : 0
-  };});
+/* generic chart core \u2014 pts:[{i,val,xTop,xBot,roD,roV,roS}] , cfg:{title,sub,metric,note} */
+function chartSVG(id, pts, cfg){
   const W=680,H=360,padL=52,padR=26,padT=34,padB=52,n=pts.length;
-  let mn=Math.min(...pts.map(p=>p.e1)),mx=Math.max(...pts.map(p=>p.e1));
-  if(mn===mx){const pad=Math.max(1,mn*0.18);mn-=pad;mx+=pad;}
+  let mn=Math.min(...pts.map(p=>p.val)),mx=Math.max(...pts.map(p=>p.val));
+  if(mn===mx){const pad=Math.max(1,Math.abs(mn)*0.18);mn-=pad;mx+=pad;}
   else{const pad=(mx-mn)*0.18;mn-=pad;mx+=pad;}
   const gx=i=> n===1? (padL+W-padR)/2 : padL+i*(W-padL-padR)/(n-1);
   const gy=v=> (H-padB)-((v-mn)/(mx-mn))*(H-padT-padB);
-  pts.forEach(p=>{p.x=gx(p.i);p.y=gy(p.e1);});
-  EXREG[id].geom={pts,W,H};
+  pts.forEach(p=>{p.x=gx(p.i);p.y=gy(p.val);});
+  GEOM[id]={pts,W};
   let grid="",ylab="";
   for(let g=0;g<3;g++){const t=g/2,yy=padT+(1-t)*(H-padT-padB),val=mn+t*(mx-mn);
     grid+=`<line x1="${padL}" y1="${yy.toFixed(1)}" x2="${W-padR}" y2="${yy.toFixed(1)}" stroke="var(--chart-grid)" ${g?'stroke-dasharray="2 5"':''}/>`;
@@ -1535,18 +1532,13 @@ function buildChart(id){
     dots+=`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${last?6:5}" fill="var(--surface-primary)" stroke="var(--gold)" stroke-width="2.5"/>`;
     if(last)dots+=`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="2.4" fill="var(--gold)"/>`;});
   let xlab="";pts.forEach(p=>{
-    xlab+=`<text x="${p.x.toFixed(1)}" y="${H-20}" text-anchor="middle" font-family="var(--font-ui)" font-weight="600" font-size="12.5" fill="var(--content-secondary)">W${p.n}</text>`
-        +`<text x="${p.x.toFixed(1)}" y="${H-5}" text-anchor="middle" font-family="var(--font-ui)" font-size="11" fill="var(--content-tertiary)">${fmtDay(p.date)}</text>`;});
+    xlab+=`<text x="${p.x.toFixed(1)}" y="${H-20}" text-anchor="middle" font-family="var(--font-ui)" font-weight="600" font-size="12.5" fill="var(--content-secondary)">${p.xTop}</text>`
+        +`<text x="${p.x.toFixed(1)}" y="${H-5}" text-anchor="middle" font-family="var(--font-ui)" font-size="11" fill="var(--content-tertiary)">${p.xBot}</text>`;});
   const areaSVG = n>1? `<defs><linearGradient id="a${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--gold)" stop-opacity=".26"/><stop offset="100%" stop-color="var(--gold)" stop-opacity="0"/></linearGradient></defs><path d="${area}" fill="url(#a${id})"/>` : '';
   const lineSVG = n>1? `<path d="${line}" fill="none" stroke="var(--gold)" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>` : '';
-  const metric = isBW? 'Top-set reps' : 'Est. 1-rep max (kg)';
-  const sub = `Best set per week ${MID} ${n} session${n===1?'':'s'} logged`;
-  const note = n<2
-    ? `Only one session logged so far \u2014 the line grows as you repeat <b>${ex.name}</b>.<br>Each point is your best set that week, turned into an estimated 1-rep max: <b>weight &times; (1 + reps &divide; 30)</b>.`
-    : `Each point is your best set that week, turned into an <b>estimated 1-rep max</b> \u2014 <b>weight &times; (1 + reps &divide; 30)</b>. So the line climbs whether you add load <b>or</b> reps.`;
   return `<div class="chart-head">
-      <div><div class="chart-title">${ex.name}</div><div class="chart-sub">${sub}</div></div>
-      <span class="chart-legend"><span class="lg"><span class="sw" style="background:var(--gold)"></span>${metric}</span></span></div>
+      <div><div class="chart-title">${cfg.title}</div><div class="chart-sub">${cfg.sub}</div></div>
+      <span class="chart-legend"><span class="lg"><span class="sw" style="background:var(--gold)"></span>${cfg.metric}</span></span></div>
     <div class="chart-frame" data-chartframe="${id}">
       <div class="readout" id="ro-${id}"><div class="d"></div><div class="v"></div><div class="s"></div></div>
       <svg class="chart-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet">
@@ -1557,19 +1549,48 @@ function buildChart(id){
         ${xlab}
       </svg>
     </div>
-    <div class="chart-note">${note}</div>`;
+    <div class="chart-note">${cfg.note}</div>`;
+}
+function buildChart(id){
+  const {ex,weeks}=EXREG[id];
+  const isBW = ex.byweek.every(w=>(w.sets||[]).every(s=>s[0]===0));
+  const n=ex.byweek.length;
+  const pts=ex.byweek.map((wk,i)=>{const b=bestSet(wk);const v=b?b.e:0;return{
+    i, val:v, xTop:`W${weeks[i].n}`, xBot:fmtDay(weeks[i].date),
+    roD:`Week ${weeks[i].n} ${MID} ${fmtDay(weeks[i].date)}`,
+    roV: b? (b.w>0? `${fmtW(b.w)} kg ${MID} ${b.r} reps` : `BW ${MID} ${b.r} reps`) : '\u2014',
+    roS: v>0? `est 1RM ${Math.round(v)}kg` : ''
+  };});
+  const note = n<2
+    ? `Only one session logged so far \u2014 the line grows as you repeat <b>${ex.name}</b>.<br>Each point is your best set that week, turned into an estimated 1-rep max: <b>weight &times; (1 + reps &divide; 30)</b>.`
+    : `Each point is your best set that week, turned into an <b>estimated 1-rep max</b> \u2014 <b>weight &times; (1 + reps &divide; 30)</b>. So the line climbs whether you add load <b>or</b> reps.`;
+  return chartSVG(id, pts, {title:ex.name, sub:`Best set per week ${MID} ${n} session${n===1?'':'s'} logged`, metric:isBW?'Top-set reps':'Est. 1-rep max (kg)', note});
+}
+function buildRunChart(id){
+  const {e,runs,type}=RUNREG[id];
+  const n=runs.length;
+  const pts=runs.map((r,i)=>{const iv=e.byrun[i];const v=iv?iv.kmph:0;return{
+    i, val:v, xTop:`R${i+1}`, xBot:fmtDay(r.date),
+    roD:`Run ${i+1} ${MID} ${fmtDay(r.date)}`,
+    roV: iv? `${iv.kmph} km/h` : '\u2014',
+    roS: iv? `${Math.round(iv.dist_m)} m ${MID} ${fmtDur(iv.dur_s)}` : ''
+  };});
+  const note = n<2
+    ? `Only one ${RUN_LABEL[type].toLowerCase()} logged so far \u2014 the line grows as you log more.<br>Each point is this interval's <b>speed (km/h)</b> that session; higher is faster.`
+    : `Each point is this interval's <b>speed (km/h)</b> across your sessions. The line climbs as you run it faster.`;
+  return chartSVG(id, pts, {title:e.name, sub:`Speed per session ${MID} ${n} run${n===1?'':'s'} logged`, metric:'Speed (km/h)', note});
 }
 function initScrub(id){
   const frame=document.querySelector(`[data-chartframe="${id}"]`);if(!frame)return;
   const svg=frame.querySelector('svg'),ro=frame.querySelector('.readout');
   const cl=svg.querySelector('.crossl'),cd=svg.querySelector('.crossd');
-  const {pts,W}=EXREG[id].geom,n=pts.length;
+  const {pts,W}=GEOM[id],n=pts.length;
   function show(i){const p=pts[i];
     cl.setAttribute('x1',p.x);cl.setAttribute('x2',p.x);cl.setAttribute('opacity','.55');
     cd.setAttribute('cx',p.x);cd.setAttribute('cy',p.y);cd.setAttribute('opacity','1');
-    ro.querySelector('.d').textContent=`Week ${p.n} ${MID} ${fmtDay(p.date)}`;
-    ro.querySelector('.v').textContent=p.label;
-    ro.querySelector('.s').textContent= p.e1>0? `est 1RM ${Math.round(p.e1)}kg` : '';
+    ro.querySelector('.d').textContent=p.roD;
+    ro.querySelector('.v').textContent=p.roV;
+    ro.querySelector('.s').textContent=p.roS;
     ro.classList.add('on');
     const fw=svg.getBoundingClientRect().width||1,roW=ro.offsetWidth,pad=6;
     let lp=p.x/W*fw;
@@ -1585,9 +1606,12 @@ function initScrub(id){
 /* ---------- render + events ---------- */
 function render(keepScroll){
   if(!keepScroll) window.scrollTo(0,0);
-  if(state.runIdx!=null){
-    app.innerHTML=runDetailHTML(state.runIdx);
-    document.getElementById('back').onclick=()=>{state.runIdx=null;render();};
+  if(state.runType!=null){
+    app.innerHTML=runDetailHTML(state.runType);
+    document.getElementById('back').onclick=()=>{state.runType=null;state.weekA=null;state.weekB=null;render();};
+    const selA=document.getElementById('weekA'),selB=document.getElementById('weekB');
+    if(selA) selA.onchange=e=>{state.weekA=+e.target.value;render(true);};
+    if(selB) selB.onchange=e=>{state.weekB=+e.target.value;render(true);};
     return;
   }
   app.innerHTML = state.session? detailHTML(state.session) : overviewHTML();
@@ -1598,7 +1622,7 @@ function render(keepScroll){
     if(selB) selB.onchange=e=>{state.weekB=+e.target.value;render(true);};
   }else{
     document.getElementById('seg').addEventListener('click',e=>{const b=e.target.closest('[data-scope]');if(!b)return;state.scope=b.dataset.scope;render();});
-    app.querySelectorAll('[data-open]').forEach(el=>el.addEventListener('click',()=>{state.session=el.dataset.open;state.runIdx=null;state.weekA=null;state.weekB=null;render();}));
+    app.querySelectorAll('[data-open]').forEach(el=>el.addEventListener('click',()=>{state.session=el.dataset.open;state.runType=null;state.weekA=null;state.weekB=null;render();}));
     initTilt();
   }
 }
@@ -1608,9 +1632,11 @@ modal.className='modal';modal.id='modal';modal.hidden=true;
 modal.innerHTML=`<div class="modal-backdrop" data-close></div><div class="modal-dialog glass" role="dialog" aria-modal="true"><button class="modal-x" data-close aria-label="Close chart">\u00d7</button><div id="modal-body"></div></div>`;
 document.body.appendChild(modal);
 let lastFocus=null;
-function openChart(id){
+function openChart(id){openModalChart(buildChart(id),id);}
+function openRunChart(id){openModalChart(buildRunChart(id),id);}
+function openModalChart(html,id){
   lastFocus=document.activeElement;
-  document.getElementById('modal-body').innerHTML=buildChart(id);
+  document.getElementById('modal-body').innerHTML=html;
   modal.hidden=false;document.body.style.overflow='hidden';
   requestAnimationFrame(()=>{modal.classList.add('show');initScrub(id);modal.querySelector('.modal-x').focus();});
 }
@@ -1618,48 +1644,87 @@ function closeChart(){
   modal.classList.remove('show');document.body.style.overflow='';
   setTimeout(()=>{modal.hidden=true;document.getElementById('modal-body').innerHTML='';if(lastFocus&&lastFocus.focus)lastFocus.focus();},240);
 }
-function runDetailHTML(idx){
-  const rn=RUNS[idx];
-  const label=rn.type==='sprint'?'Sprint session':'Long / slow run';
-  const n=rn.intervals.length;
-  const rows=rn.intervals.map((iv,i)=>`<div class="exrow"><div class="exrow-main static">
-      <div class="ex-name">Interval ${i+1}</div>
-      <div class="ex-col c-d" data-lab="Distance (m)">${Math.round(iv.dist_m)}</div>
-      <div class="ex-col c-t" data-lab="Time">${fmtDur(iv.dur_s)}</div>
-      <div class="ex-col c-s rp" data-lab="Speed (km/h)">${iv.kmph}</div>
-    </div></div>`).join('');
-  const shape = n>1 ? `${MID} ${n}${X}${Math.round(rn.intervals[0].dist_m)}m` : '';
+/* run session detail \u2014 mirrors strength: each run = a "week", intervals = the tracked rows */
+function runDetailHTML(type){
+  const rs=RUN_SESS[type], runs=rs.runs, n=runs.length, single=n<2;
+  let a=state.weekA, b=state.weekB;
+  if(a==null||a<0||a>=n) a=Math.max(0,n-2);
+  if(b==null||b<0||b>=n) b=n-1;
+  const latest=runs[n-1];
+  const maxIv=Math.max(...runs.map(r=>r.intervals.length));
+  const dstr=i=>fmtDay(runs[i].date);
+  const dval=iv=> iv? Math.round(iv.dist_m) : '\u2014';
+  const sval=iv=> iv? iv.kmph : '\u2014';
+  const rows=[];
+  for(let k=0;k<maxIv;k++){
+    const e={name:`Interval ${k+1}`, byrun:runs.map(r=>r.intervals[k]||null)};
+    const id='rn'+(exSeq++); RUNREG[id]={e,runs,type};
+    const ser=e.byrun.map(iv=>iv?iv.kmph:0);
+    if(single){
+      const iv=e.byrun[0];
+      rows.push(`<div class="exrow" data-ex="${id}">
+        <div class="exrow-main" data-runtoggle="${id}" role="button" tabindex="0" aria-label="Open ${e.name} chart">
+          <div class="ex-name">${e.name}</div>
+          <div class="ex-col wt" data-lab="Distance (m)">${dval(iv)}</div>
+          <div class="ex-col rp" data-lab="Speed (km/h)">${sval(iv)}</div>
+          ${miniSpark(ser)}<span class="delta new">new</span>
+          <span class="chev">${CHEV}</span>
+        </div></div>`);
+      continue;
+    }
+    const ia=e.byrun[a], ib=e.byrun[b], sa=ia?ia.kmph:0, sb=ib?ib.kmph:0;
+    let d = (!ia||!ib)?{t:'hold'} : sb>sa?{t:'up',x:`+${+(sb-sa).toFixed(1)} km/h`} : sb<sa?{t:'down',x:`${+(sb-sa).toFixed(1)} km/h`} : {t:'hold'};
+    const chip=d.t==='up'?`<span class="delta up"><span class="dv">${ARWU}</span> ${d.x}</span>`:d.t==='down'?`<span class="delta hold"><span class="dv">\u2193</span> ${d.x}</span>`:`<span class="delta hold">held</span>`;
+    const pair=(iv,cls,wk)=>`<div class="pair ${cls}" data-wk="${wk}"><div class="pw" data-lab="Distance (m)">${dval(iv)}</div><div class="pr" data-lab="Speed">${sval(iv)}</div></div>`;
+    rows.push(`<div class="exrow" data-ex="${id}"><div class="exrow-main" data-runtoggle="${id}" role="button" tabindex="0" aria-label="Open ${e.name} chart">
+      <div class="ex-name">${e.name}</div>
+      ${pair(ia,'pa',dstr(a))}${pair(ib,'pb',dstr(b))}
+      ${miniSpark([sa,sb])}${chip}<span class="chev">${CHEV}</span>
+    </div></div>`);
+  }
+  const thead = single
+    ? `<div class="ex-thead"><span>Interval</span><span>Distance (m)</span><span>Speed (km/h)</span><span class="tcol">Trend</span><span></span><span></span></div>`
+    : `<div class="ex-thead"><span>Interval</span>
+        <div class="pair-h"><span>Distance (m)</span><span>Speed</span></div>
+        <div class="pair-h"><span>Distance (m)</span><span>Speed</span></div>
+        <span class="tcol">Trend</span><span></span><span></span></div>`;
+  const opts=(sel)=>runs.map((r,i)=>`<option value="${i}"${i===sel?' selected':''}>Run ${i+1} ${MID} ${dstr(i)}</option>`).join('');
+  const cmpBar = single ? '' : `<div class="cmp-bar">
+    <span class="cb-lab">Compare</span>
+    <div class="cb-sel"><select id="weekA" aria-label="Left run">${opts(a)}</select></div>
+    <div class="cb-sel"><select id="weekB" aria-label="Right run">${opts(b)}</select></div>
+  </div>`;
   return `<button class="backlink" id="back">${'\u2190'} All sessions</button>
     <div class="detail-head">
       <div>
         <span class="eyebrow"><span class="tick"></span>Conditioning</span>
-        <h2>${label}<span class="gd">.</span></h2>
+        <h2>${RUN_LABEL[type]}<span class="gd">.</span></h2>
       </div>
-      <div class="weekchips"><span class="wchip"><b>${fmtDay(rn.date)}</b></span></div>
+      <div class="weekchips">${runs.map((r,i)=>`<span class="wchip">R${i+1} ${MID} <b>${fmtDay(r.date)}</b></span>`).join('')}</div>
     </div>
     <div class="dstats">
-      <div class="dstat"><div class="k">Distance</div><div class="v nums">${fmtDist(rn.total_dist_m)}</div></div>
-      <div class="dstat"><div class="k">Avg pace</div><div class="v gold nums">${fmtPace(rn.pace_s_per_km)}<span class="u">/km</span></div></div>
-      <div class="dstat"><div class="k">Avg speed</div><div class="v nums">${rn.avg_kmph}<span class="u">km/h</span></div></div>
-      <div class="dstat"><div class="k">Moving time</div><div class="v nums">${fmtDur(rn.total_dur_s)}</div></div>
+      <div class="dstat"><div class="k">Distance</div><div class="v nums">${fmtDist(latest.total_dist_m)}</div></div>
+      <div class="dstat"><div class="k">Avg pace</div><div class="v gold nums">${fmtPace(latest.pace_s_per_km)}<span class="u">/km</span></div></div>
+      <div class="dstat"><div class="k">Avg speed</div><div class="v nums">${latest.avg_kmph}<span class="u">km/h</span></div></div>
+      <div class="dstat"><div class="k">Moving time</div><div class="v nums">${fmtDur(latest.total_dur_s)}</div></div>
     </div>
-    <div class="glass ex-table runs" style="margin-top:18px">
+    <div class="glass ex-table runsess${single?' single':''}" style="margin-top:18px">
+      ${cmpBar}
       <div class="block">
         <button class="block-head" data-blocktoggle aria-expanded="true">
-          <span class="block-lab"><span class="tick"></span>Intervals<span class="ss">${shape}</span></span>
+          <span class="block-lab"><span class="tick"></span>Intervals<span class="ss">${MID} ${maxIv}${X}${Math.round(latest.intervals[0].dist_m)}m</span></span>
           <span class="block-chev">${CHEV}</span>
         </button>
-        <div class="block-body">
-          <div class="ex-thead"><span>Interval</span><span>Distance (m)</span><span>Time</span><span>Speed (km/h)</span></div>
-          ${rows}
-        </div>
+        <div class="block-body">${thead}${rows.join('')}</div>
       </div>
     </div>
     ${footerHTML()}`;
 }
 modal.addEventListener('click',e=>{if(e.target.closest('[data-close]'))closeChart();});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!modal.hidden)closeChart();});
-app.addEventListener('click',e=>{const t=e.target.closest('[data-run]');if(t){state.runIdx=+t.dataset.run;state.session=null;render();}});
+app.addEventListener('click',e=>{const t=e.target.closest('[data-runtype]');if(t){state.runType=t.dataset.runtype;state.session=null;state.weekA=null;state.weekB=null;render();}});
+app.addEventListener('click',e=>{const t=e.target.closest('[data-runtoggle]');if(t)openRunChart(t.dataset.runtoggle);});
+app.addEventListener('keydown',e=>{const t=e.target.closest('[data-runtoggle]');if(t&&(e.key==='Enter'||e.key===' ')){e.preventDefault();openRunChart(t.dataset.runtoggle);}});
 app.addEventListener('click',e=>{const t=e.target.closest('[data-toggle]');if(t)openChart(t.dataset.toggle);});
 app.addEventListener('keydown',e=>{const t=e.target.closest('[data-toggle]');if(t&&(e.key==='Enter'||e.key===' ')){e.preventDefault();openChart(t.dataset.toggle);}});
 app.addEventListener('click',e=>{const b=e.target.closest('[data-blocktoggle]');if(!b)return;const blk=b.closest('.block');blk.classList.toggle('collapsed');b.setAttribute('aria-expanded',String(!blk.classList.contains('collapsed')));});
