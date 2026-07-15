@@ -31,6 +31,7 @@ jobs:
           WHOOP_CLIENT_ID: ${{ secrets.WHOOP_CLIENT_ID }}
           WHOOP_CLIENT_SECRET: ${{ secrets.WHOOP_CLIENT_SECRET }}
           WHOOP_REFRESH_TOKEN: ${{ secrets.WHOOP_REFRESH_TOKEN }}
+          WHOOP_START: "2026-06-28"   # align to the training-programme start date
         run: |
           if [ -z "$WHOOP_CLIENT_ID" ]; then
             echo "WHOOP secrets not configured yet — skipping (add them, then re-run)."
