@@ -282,6 +282,27 @@ svg.mini{width:92px;height:28px;display:block}
 .readout .s{font-size:11.5px;color:var(--gold);font-weight:600;margin-top:1px}
 .chart-note{margin-top:14px;font-size:12.5px;color:var(--content-tertiary);line-height:1.6}
 .chart-note b{color:var(--content-secondary);font-weight:600}
+/* run modal */
+.run-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:6px 0 4px}
+@media(max-width:560px){
+  .run-stats{grid-template-columns:1fr 1fr}
+  .rstat .v{font-size:20px}
+  .ivrow{grid-template-columns:24px 1fr 1fr 1fr;gap:8px;padding:10px 13px}
+  .ivrow .ivd,.ivrow .ivt,.ivrow .ivs{font-size:13px;white-space:nowrap}
+}
+.rstat{background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:14px;padding:13px 15px}
+.rstat .k{font-weight:600;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--content-tertiary)}
+.rstat .v{font-family:var(--font-display);font-weight:800;font-size:22px;letter-spacing:-.02em;margin-top:5px;color:var(--content-primary)}
+.rstat .v small{font-family:var(--font-ui);font-weight:600;font-size:12px;color:var(--content-tertiary);letter-spacing:0}
+.iv-head{margin:18px 0 8px;font-weight:700;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold-deep)}
+.run-intervals{border:1px solid var(--border-div);border-radius:14px;overflow:hidden}
+.ivrow{display:grid;grid-template-columns:36px 1fr 1fr 1fr;align-items:center;gap:12px;padding:11px 16px}
+.ivrow+.ivrow{border-top:1px solid var(--border-div)}
+.ivrow .ivn{font-family:var(--font-display);font-weight:800;color:var(--gold-deep)}
+.ivrow .ivd,.ivrow .ivt,.ivrow .ivs{font-family:var(--font-display);font-weight:600;font-size:14px}
+.ivrow .ivs{text-align:right;color:var(--content-secondary)}
+.ivrow.ivhd{background:var(--surface-secondary)}
+.ivrow.ivhd span{font-family:var(--font-ui);font-weight:600;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--content-tertiary)}
 
 footer{margin-top:20px;border-top:1px solid var(--border-div);padding:26px 0 8px}
 footer .legend{font-size:13px;line-height:1.7;color:var(--content-tertiary);max-width:760px}
@@ -1063,7 +1084,40 @@ const DATA = {
         }
       ]
     }
-  }
+  },
+  "runs": [
+    {
+      "type": "sprint",
+      "date": "2026-07-15",
+      "name": "Running sprint",
+      "intervals": [
+        {
+          "dist_m": 800.0,
+          "dur_s": 240.0,
+          "kmph": 12.0
+        },
+        {
+          "dist_m": 800.0,
+          "dur_s": 240.0,
+          "kmph": 12.0
+        },
+        {
+          "dist_m": 800.0,
+          "dur_s": 240.0,
+          "kmph": 12.0
+        },
+        {
+          "dist_m": 800.0,
+          "dur_s": 240.0,
+          "kmph": 12.0
+        }
+      ],
+      "total_dist_m": 3200.0,
+      "total_dur_s": 960.0,
+      "avg_kmph": 12.0,
+      "pace_s_per_km": 300
+    }
+  ]
 };
 const MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const X="\u00d7", MID="\u00b7", NDASH="\u2013", ARWU="\u2191", CHEV="\u203a";
@@ -1107,7 +1161,16 @@ const CATALOG=['GPP S&C 1','GPP S&C 2','GPP S&C 3'];
 const OCC=[];
 for(const[name,s]of Object.entries(DATA.sessions))s.weeks.forEach((w,i)=>OCC.push({name,i,date:w.date,n:w.n,vol:weekVol(s,i),wk:mondayISO(w.date)}));
 OCC.sort((a,b)=>a.date<b.date?-1:1);
-const WEEKS=[...new Set(OCC.map(o=>o.wk))].sort();
+const RUNS=(DATA.runs||[]).map((r,idx)=>({...r,idx,wk:mondayISO(r.date)}));
+const WEEKS=[...new Set([...OCC.map(o=>o.wk),...RUNS.map(r=>r.wk)])].sort();
+const RUN_TYPES=[{key:'sprint',label:'Sprint session',desc:'Short high-intensity intervals'},
+                {key:'long',label:'Long / slow run',desc:'Steady aerobic distance'}];
+function runsInScope(scope){return scope==='all'?RUNS:RUNS.filter(r=>r.wk===scope);}
+function latestRunOfType(scope,key){const m=runsInScope(scope).filter(r=>r.type===key);return m.length?m[m.length-1]:null;}
+/* run formatters */
+function fmtDist(m){return m>=1000?(m/1000).toFixed(2).replace(/\.00$/,'')+' km':Math.round(m)+' m';}
+function fmtPace(s){return Math.floor(s/60)+':'+String(Math.round(s%60)).padStart(2,'0');}
+function fmtDur(s){const m=Math.floor(s/60);return m+':'+String(Math.round(s%60)).padStart(2,'0');}
 
 /* global hero numbers */
 const totalLoad=OCC.reduce((t,o)=>t+o.vol,0);
@@ -1259,12 +1322,24 @@ function overviewHTML(){
     </div>`;
   }).join('');
 
-  const runTiles=[
-    {n:'Sprint session',d:'Short high-intensity intervals'},
-    {n:'Long / slow run',d:'Steady aerobic distance'}
-  ].map(r=>`<div class="glass tile ghost"><div class="tile-top"><span class="tile-name" style="font-size:18px">${r.n}</span><span class="tag ghost">Not logged</span></div>
-      <div class="tile-meta">${r.d}.</div>
-      <div class="tile-foot"><span class="tile-go" style="color:var(--content-tertiary)">Awaiting first run</span></div></div>`).join('');
+  const runTiles=RUN_TYPES.map(rt=>{
+    const rn=latestRunOfType(state.scope,rt.key);
+    if(!rn){
+      const ever=RUNS.some(r=>r.type===rt.key);
+      const sub=state.scope!=='all'&&ever?'Not this week':'Awaiting first run';
+      return `<div class="glass tile ghost"><div class="tile-top"><span class="tile-name" style="font-size:18px">${rt.label}</span><span class="tag ghost">Not logged</span></div>
+        <div class="tile-meta">${rt.desc}.</div>
+        <div class="tile-foot"><span class="tile-go" style="color:var(--content-tertiary)">${sub}</span></div></div>`;
+    }
+    const reps=rn.intervals.length, per=rn.intervals[0].dist_m;
+    const shape = reps>1 ? `${reps} ${X} ${fmtDist(per)}` : fmtDist(rn.total_dist_m);
+    return `<div class="glass tile done" data-run="${rn.idx}" data-tilt>
+      <div class="tile-top"><span class="tile-name" style="font-size:18px">${rt.label}</span><span class="tag done">${CHEV_CHECK} Done</span></div>
+      <div class="tile-meta">${fmtDay(rn.date)} ${MID} ${shape}</div>
+      <div class="tile-foot"><span class="big nums">${fmtDist(rn.total_dist_m)} <small>${rn.avg_kmph} km/h</small></span><span class="tile-go">Details ${CHEV}</span></div>
+      <div style="margin-top:12px"><span class="prpill" style="color:var(--gold-deep);background:var(--gold-pale)">${fmtPace(rn.pace_s_per_km)} /km</span></div>
+    </div>`;
+  }).join('');
 
   return heroHTML()
     + `<div class="filter"><span class="lab">Filter</span><div class="seg" id="seg">${segs}</div></div>`
@@ -1435,8 +1510,31 @@ function closeChart(){
   modal.classList.remove('show');document.body.style.overflow='';
   setTimeout(()=>{modal.hidden=true;document.getElementById('modal-body').innerHTML='';if(lastFocus&&lastFocus.focus)lastFocus.focus();},240);
 }
+function buildRun(idx){
+  const rn=RUNS[idx];
+  const label=rn.type==='sprint'?'Sprint session':'Long / slow run';
+  const stats=[
+    {k:'Distance',v:fmtDist(rn.total_dist_m)},
+    {k:'Avg pace',v:fmtPace(rn.pace_s_per_km)+' <small>/km</small>'},
+    {k:'Avg speed',v:rn.avg_kmph+' <small>km/h</small>'},
+    {k:'Moving time',v:fmtDur(rn.total_dur_s)},
+  ].map(s=>`<div class="rstat"><div class="k">${s.k}</div><div class="v nums">${s.v}</div></div>`).join('');
+  const rows=rn.intervals.map((iv,i)=>`<div class="ivrow"><span class="ivn">${i+1}</span><span class="ivd nums">${fmtDist(iv.dist_m)}</span><span class="ivt nums">${fmtDur(iv.dur_s)}</span><span class="ivs nums">${iv.kmph} km/h</span></div>`).join('');
+  const multi=rn.intervals.length>1;
+  return `<div class="chart-head"><div><div class="chart-title">${label}</div><div class="chart-sub">${fmtDay(rn.date)} ${MID} ${rn.name}</div></div></div>
+    <div class="run-stats">${stats}</div>
+    ${multi?`<div class="iv-head">Intervals</div><div class="run-intervals"><div class="ivrow ivhd"><span class="ivn">#</span><span class="ivd">Distance</span><span class="ivt">Time</span><span class="ivs">Speed</span></div>${rows}</div>`:''}
+    <div class="chart-note">Distance in metres, pace per km. As you log more runs, this will chart <b>pace &amp; distance over time</b>.</div>`;
+}
+function openRun(idx){
+  lastFocus=document.activeElement;
+  document.getElementById('modal-body').innerHTML=buildRun(idx);
+  modal.hidden=false;document.body.style.overflow='hidden';
+  requestAnimationFrame(()=>{modal.classList.add('show');modal.querySelector('.modal-x').focus();});
+}
 modal.addEventListener('click',e=>{if(e.target.closest('[data-close]'))closeChart();});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!modal.hidden)closeChart();});
+app.addEventListener('click',e=>{const t=e.target.closest('[data-run]');if(t)openRun(+t.dataset.run);});
 app.addEventListener('click',e=>{const t=e.target.closest('[data-toggle]');if(t)openChart(t.dataset.toggle);});
 app.addEventListener('keydown',e=>{const t=e.target.closest('[data-toggle]');if(t&&(e.key==='Enter'||e.key===' ')){e.preventDefault();openChart(t.dataset.toggle);}});
 app.addEventListener('click',e=>{const b=e.target.closest('[data-blocktoggle]');if(!b)return;const blk=b.closest('.block');blk.classList.toggle('collapsed');b.setAttribute('aria-expanded',String(!blk.classList.contains('collapsed')));});
