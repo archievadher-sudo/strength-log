@@ -1,0 +1,68 @@
+name: WHOOP sync
+
+# Pulls WHOOP data daily and commits docs/whoop_data.json (Pages redeploys).
+# Also persists the rotated refresh token back into the WHOOP_REFRESH_TOKEN secret.
+
+on:
+  schedule:
+    - cron: "20 11 * * *"   # 11:20 UTC daily (after morning recovery is finalised)
+  workflow_dispatch: {}      # manual "Run workflow" button
+
+permissions:
+  contents: write            # to commit docs/whoop_data.json
+
+concurrency:
+  group: whoop-sync          # never run two token-refreshes at once (tokens rotate)
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Fetch WHOOP data
+        id: fetch
+        env:
+          WHOOP_CLIENT_ID: ${{ secrets.WHOOP_CLIENT_ID }}
+          WHOOP_CLIENT_SECRET: ${{ secrets.WHOOP_CLIENT_SECRET }}
+          WHOOP_REFRESH_TOKEN: ${{ secrets.WHOOP_REFRESH_TOKEN }}
+        run: python3 whoop/fetch.py
+
+      # Persist the rotated refresh token even if the fetch step failed midway
+      # (fetch.py writes new_refresh_token.txt immediately after refreshing).
+      - name: Save rotated refresh token
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}   # fine-grained PAT with Secrets: read+write
+        run: |
+          if [ -f new_refresh_token.txt ]; then
+            gh secret set WHOOP_REFRESH_TOKEN --body "$(cat new_refresh_token.txt)"
+            rm -f new_refresh_token.txt
+            echo "refresh token rotated + saved"
+          else
+            echo "no new token to save"
+          fi
+
+      - name: Stamp fetch time
+        if: steps.fetch.outcome == 'success'
+        run: |
+          python3 - <<'PY'
+          import json, datetime
+          p="docs/whoop_data.json"
+          d=json.load(open(p)); d["fetched"]=datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%MZ")
+          json.dump(d, open(p,"w"))
+          PY
+
+      - name: Commit if changed
+        if: steps.fetch.outcome == 'success'
+        run: |
+          git config user.name  "whoop-sync[bot]"
+          git config user.email "whoop-sync@users.noreply.github.com"
+          git add docs/whoop_data.json
+          git commit -m "WHOOP sync: $(date -u +%Y-%m-%d)" || { echo "no changes"; exit 0; }
+          git push
