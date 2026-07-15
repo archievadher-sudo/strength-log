@@ -6,11 +6,12 @@
   programme definition keyed on normalised exercise names.
 - Emits a JSON blob (consumed by the dashboard) and an .xlsx working log.
 """
-import csv, json, re, unicodedata
+import csv, json, re, sys, unicodedata
 from collections import defaultdict, OrderedDict
 from datetime import datetime
 
-CSV_PATH = "/Users/fmy-235/Downloads/export_15 Jul 2026.csv"
+# CSV path can be passed as arg 1 (RepCount export filenames change per export)
+CSV_PATH = sys.argv[1] if len(sys.argv) > 1 else "/Users/fmy-235/Downloads/export_15 Jul 2026 (1).csv"
 OUT_DIR = "/Users/fmy-235/Desktop/Training-Tracker"
 START = "2026-06-28"
 
@@ -75,12 +76,28 @@ SESSION_MAP = {
 # ---- parse CSV ----------------------------------------------------------
 # structure: data[session][date][canon_exercise] = [(w,reps), ...]
 data = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
+runs_raw = defaultdict(list)  # keyed by Workout Start -> list of cardio intervals
 with open(CSV_PATH, newline="") as f:
     for r in csv.DictReader(f):
         start = r["Workout Start"]
         if not start or start[:10] < START:
             continue
         date = start[:10]
+        # --- cardio / runs (Kcal ignored; Distance=m, Duration=s, Notes=speed kmph) ---
+        if r["Category"].strip() == "Cardio":
+            try:
+                dist = float(r["Distance"]) if r["Distance"] else 0.0
+            except ValueError:
+                dist = 0.0
+            try:
+                dur = float(r["Duration"]) if r["Duration"] else 0.0
+            except ValueError:
+                dur = 0.0
+            if dist > 0 and dur > 0:
+                runs_raw[start].append({"name": r["Exercise"].strip(),
+                                        "dist_m": dist, "dur_s": dur,
+                                        "note": r["Notes"].strip()})
+            continue
         sess_raw = norm(r["Name"])
         if sess_raw not in SESSION_MAP:
             continue
@@ -137,6 +154,32 @@ for session, blocks in PROGRAMME.items():
         sess_obj["blocks"].append(block)
     out["sessions"][session] = sess_obj
 
+# ---- assemble runs ------------------------------------------------------
+def run_type(name):
+    return "sprint" if "sprint" in name.lower() else "long"
+
+runs = []
+for start in sorted(runs_raw.keys()):
+    intervals = runs_raw[start]
+    name = intervals[0]["name"] or "Run"
+    tot_d = sum(iv["dist_m"] for iv in intervals)
+    tot_t = sum(iv["dur_s"] for iv in intervals)
+    avg_kmph = round((tot_d / tot_t) * 3.6, 1) if tot_t else 0.0
+    runs.append({
+        "type": run_type(name),
+        "date": start[:10],
+        "name": name.rstrip(),
+        "intervals": [{
+            "dist_m": iv["dist_m"], "dur_s": iv["dur_s"],
+            "kmph": round((iv["dist_m"] / iv["dur_s"]) * 3.6, 1) if iv["dur_s"] else 0.0,
+        } for iv in intervals],
+        "total_dist_m": tot_d,
+        "total_dur_s": tot_t,
+        "avg_kmph": avg_kmph,
+        "pace_s_per_km": round(tot_t / (tot_d / 1000)) if tot_d else 0,
+    })
+out["runs"] = runs
+
 with open(f"{OUT_DIR}/tracker_data.json", "w") as f:
     json.dump(out, f, indent=2)
 
@@ -148,4 +191,10 @@ for session, s in out["sessions"].items():
         for e in b["exercises"]:
             cells = " | ".join(c["cell"] or "-" for c in e["byweek"])
             print(f"  [{b['label']:7}] {e['name']:26} {cells}")
+print("\n== RUNS ==")
+for rn in out["runs"]:
+    m, s = divmod(rn["pace_s_per_km"], 60)
+    print(f"  {rn['date']} {rn['type']:6} {rn['name']}: {len(rn['intervals'])}x "
+          f"{rn['intervals'][0]['dist_m']:.0f}m | {rn['total_dist_m']/1000:.2f}km "
+          f"| {rn['avg_kmph']} km/h | {m}:{s:02d}/km")
 print("\nWrote tracker_data.json")
