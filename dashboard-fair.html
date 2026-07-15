@@ -209,7 +209,7 @@ main{padding:28px 0 72px}
 .ex-table.single{--exg:minmax(150px,1.3fr) 96px 60px 86px 92px 22px}
 .ex-table.runsess.single{--exg:minmax(140px,1fr) 118px 110px 86px 90px 22px}
 .ex-table.runsess:not(.single){--exg:minmax(140px,1fr) 132px 132px 84px 90px 22px}
-.ex-table.runsess .pair,.ex-table.runsess .pair-h{grid-template-columns:64px 40px}
+.ex-table.runsess .pair,.ex-table.runsess .pair-h{grid-template-columns:84px 48px}
 .dstat .v .u{font-family:var(--font-ui);font-weight:600;font-size:12px;color:var(--content-tertiary);margin-left:3px}
 .cmp-bar,.ex-thead,.exrow-main{display:grid;grid-template-columns:var(--exg);align-items:center;gap:16px}
 .cmp-bar{padding:14px 24px 13px;border-bottom:1px solid var(--border-div)}
@@ -228,13 +228,11 @@ main{padding:28px 0 72px}
 .exrow-main:hover{background:rgba(212,160,67,.05)}
 .ex-name{font-weight:600;font-size:15px}
 /* two-week compare pairs */
-.pair,.pair-h{display:grid;grid-template-columns:84px 28px;gap:12px;align-items:start;justify-content:start}
+.pair,.pair-h{display:grid;grid-template-columns:82px 40px;gap:8px;align-items:start;justify-content:start}
 .pair.pb,.ex-thead .pair-h+.pair-h{border-left:1px solid var(--border-subtle);padding-left:20px}
-.pair .pw,.pair .pr{display:flex;flex-direction:column;gap:4px;font-family:var(--font-display);font-weight:600;font-size:14px;font-variant-numeric:tabular-nums lining-nums}
-.pair .pw{align-items:flex-end}   /* weight right-aligned so it hugs its reps */
+.pair .pw,.pair .pr{display:flex;flex-direction:column;gap:4px;align-items:center;font-family:var(--font-display);font-weight:600;font-size:14px;font-variant-numeric:tabular-nums lining-nums}
 .pair .pr{color:var(--content-secondary)}
-.ex-thead .pair-h span{white-space:nowrap}
-.ex-thead .pair-h span:first-child{text-align:right}
+.ex-thead .pair-h span{white-space:nowrap;text-align:center}
 .pair span{white-space:nowrap}
 .pair::before,.pw::before,.pr::before{display:none}
 /* single-week cells */
