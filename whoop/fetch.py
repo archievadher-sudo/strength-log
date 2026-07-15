@@ -18,6 +18,10 @@ import os, json, datetime, urllib.parse, urllib.request, urllib.error
 
 BASE      = "https://api.prod.whoop.com/developer/v2"
 TOKEN_URL = "https://api.prod.whoop.com/oauth/oauth2/token"
+# Cloudflare in front of WHOOP blocks the default Python-urllib UA (error 1010),
+# so present a normal browser UA on every request.
+UA        = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
+             "(KHTML, like Gecko) Chrome/125.0 Safari/537.36")
 OUT_JSON  = os.path.join(os.path.dirname(__file__), "..", "docs", "whoop_data.json")
 OUT_TOKEN = os.path.join(os.path.dirname(__file__), "..", "new_refresh_token.txt")
 
@@ -31,7 +35,8 @@ def refresh():
         "scope": "offline",
     }).encode()
     req = urllib.request.Request(TOKEN_URL, data=data,
-                                 headers={"Content-Type": "application/x-www-form-urlencoded"})
+                                 headers={"Content-Type": "application/x-www-form-urlencoded",
+                                          "User-Agent": UA})
     r = json.load(urllib.request.urlopen(req))
     # persist the rotated refresh token ASAP
     with open(OUT_TOKEN, "w") as f:
@@ -48,7 +53,8 @@ def get_all(access, path, params=None):
         if nt:
             p["nextToken"] = nt
         url = f"{BASE}{path}?" + urllib.parse.urlencode(p)
-        req = urllib.request.Request(url, headers={"Authorization": f"Bearer {access}"})
+        req = urllib.request.Request(url, headers={"Authorization": f"Bearer {access}",
+                                                   "User-Agent": UA})
         r = json.load(urllib.request.urlopen(req))
         out += r.get("records", [])
         nt = r.get("next_token") or r.get("nextToken")
@@ -58,7 +64,8 @@ def get_all(access, path, params=None):
 
 
 def get_one(access, path):
-    req = urllib.request.Request(f"{BASE}{path}", headers={"Authorization": f"Bearer {access}"})
+    req = urllib.request.Request(f"{BASE}{path}", headers={"Authorization": f"Bearer {access}",
+                                                          "User-Agent": UA})
     return json.load(urllib.request.urlopen(req))
 
 

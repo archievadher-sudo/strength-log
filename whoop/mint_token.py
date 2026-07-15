@@ -40,8 +40,21 @@ def exchange(code):
         "client_secret": os.environ["WHOOP_CLIENT_SECRET"],
     }).encode()
     req = urllib.request.Request(TOKEN_URL, data=data,
-                                 headers={"Content-Type": "application/x-www-form-urlencoded"})
-    r = json.load(urllib.request.urlopen(req))
+                                 headers={"Content-Type": "application/x-www-form-urlencoded",
+                                          # Cloudflare blocks the default urllib UA (error 1010)
+                                          "User-Agent": ("Mozilla/5.0 (Macintosh; Intel Mac OS X "
+                                                         "10_15_7) AppleWebKit/537.36 (KHTML, like "
+                                                         "Gecko) Chrome/125.0 Safari/537.36")})
+    try:
+        r = json.load(urllib.request.urlopen(req))
+    except urllib.error.HTTPError as e:
+        body = e.read().decode("utf-8", "replace")
+        print(f"\n=== WHOOP returned HTTP {e.code} ===\n{body}\n", file=sys.stderr)
+        raise SystemExit(
+            "Token exchange failed. Most common cause: the auth code was already "
+            "used or expired (they are single-use and short-lived) -- reload the "
+            "login URL for a FRESH code and try again. If the body says "
+            "'invalid_client', double-check the CLIENT_SECRET.")
     return r
 
 if __name__ == "__main__":
