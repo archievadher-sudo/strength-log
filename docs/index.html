@@ -207,6 +207,10 @@ main{padding:28px 0 72px}
 
 .ex-table{--exg:minmax(150px,1.25fr) minmax(0,1fr) minmax(0,1fr) 86px 92px 22px}
 .ex-table.single{--exg:minmax(150px,1.3fr) 96px 60px 86px 92px 22px}
+.ex-table.runs{--exg:minmax(120px,1.15fr) 1fr 1fr 1fr}
+.exrow-main.static{cursor:default}
+.exrow-main.static:hover{background:none}
+.dstat .v .u{font-family:var(--font-ui);font-weight:600;font-size:12px;color:var(--content-tertiary);margin-left:3px}
 .cmp-bar,.ex-thead,.exrow-main{display:grid;grid-template-columns:var(--exg);align-items:center;gap:16px}
 .cmp-bar{padding:14px 24px 13px;border-bottom:1px solid var(--border-div)}
 .cmp-bar .cb-lab{font-weight:600;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--content-tertiary);align-self:center}
@@ -271,6 +275,11 @@ svg.mini{width:92px;height:28px;display:block}
   .ex-table.single .delta{grid-area:delta;justify-self:end;align-self:end;margin-bottom:2px}
   .ex-table.single svg.mini{grid-area:spark;justify-self:start;width:150px;height:30px}
   .ex-table.single .chev{grid-area:chev;align-self:center}
+  /* runs table */
+  .ex-table.runs .exrow-main{grid-template-columns:1fr 1fr 1fr;grid-template-areas:"name name name" "cd ct cs";column-gap:14px;row-gap:12px;align-items:start;padding:16px 18px}
+  .ex-table.runs .ex-name{grid-area:name;align-self:center;font-size:15px}
+  .ex-table.runs .c-d{grid-area:cd}.ex-table.runs .c-t{grid-area:ct}.ex-table.runs .c-s{grid-area:cs}
+  .ex-table.runs .ex-col::before{content:attr(data-lab);display:block;font-family:var(--font-ui);font-weight:700;font-size:8.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--content-tertiary);margin-bottom:4px}
 }
 /* small-screen polish */
 @media(max-width:560px){
@@ -1576,6 +1585,11 @@ function initScrub(id){
 /* ---------- render + events ---------- */
 function render(keepScroll){
   if(!keepScroll) window.scrollTo(0,0);
+  if(state.runIdx!=null){
+    app.innerHTML=runDetailHTML(state.runIdx);
+    document.getElementById('back').onclick=()=>{state.runIdx=null;render();};
+    return;
+  }
   app.innerHTML = state.session? detailHTML(state.session) : overviewHTML();
   if(state.session){
     document.getElementById('back').onclick=()=>{state.session=null;state.weekA=null;state.weekB=null;render();};
@@ -1584,7 +1598,7 @@ function render(keepScroll){
     if(selB) selB.onchange=e=>{state.weekB=+e.target.value;render(true);};
   }else{
     document.getElementById('seg').addEventListener('click',e=>{const b=e.target.closest('[data-scope]');if(!b)return;state.scope=b.dataset.scope;render();});
-    app.querySelectorAll('[data-open]').forEach(el=>el.addEventListener('click',()=>{state.session=el.dataset.open;state.weekA=null;state.weekB=null;render();}));
+    app.querySelectorAll('[data-open]').forEach(el=>el.addEventListener('click',()=>{state.session=el.dataset.open;state.runIdx=null;state.weekA=null;state.weekB=null;render();}));
     initTilt();
   }
 }
@@ -1604,31 +1618,48 @@ function closeChart(){
   modal.classList.remove('show');document.body.style.overflow='';
   setTimeout(()=>{modal.hidden=true;document.getElementById('modal-body').innerHTML='';if(lastFocus&&lastFocus.focus)lastFocus.focus();},240);
 }
-function buildRun(idx){
+function runDetailHTML(idx){
   const rn=RUNS[idx];
   const label=rn.type==='sprint'?'Sprint session':'Long / slow run';
-  const stats=[
-    {k:'Distance',v:fmtDist(rn.total_dist_m)},
-    {k:'Avg pace',v:fmtPace(rn.pace_s_per_km)+' <small>/km</small>'},
-    {k:'Avg speed',v:rn.avg_kmph+' <small>km/h</small>'},
-    {k:'Moving time',v:fmtDur(rn.total_dur_s)},
-  ].map(s=>`<div class="rstat"><div class="k">${s.k}</div><div class="v nums">${s.v}</div></div>`).join('');
-  const rows=rn.intervals.map((iv,i)=>`<div class="ivrow"><span class="ivn">${i+1}</span><span class="ivd nums">${fmtDist(iv.dist_m)}</span><span class="ivt nums">${fmtDur(iv.dur_s)}</span><span class="ivs nums">${iv.kmph} km/h</span></div>`).join('');
-  const multi=rn.intervals.length>1;
-  return `<div class="chart-head"><div><div class="chart-title">${label}</div><div class="chart-sub">${fmtDay(rn.date)} ${MID} ${rn.name}</div></div></div>
-    <div class="run-stats">${stats}</div>
-    ${multi?`<div class="iv-head">Intervals</div><div class="run-intervals"><div class="ivrow ivhd"><span class="ivn">#</span><span class="ivd">Distance</span><span class="ivt">Time</span><span class="ivs">Speed</span></div>${rows}</div>`:''}
-    <div class="chart-note">Distance in metres, pace per km. As you log more runs, this will chart <b>pace &amp; distance over time</b>.</div>`;
-}
-function openRun(idx){
-  lastFocus=document.activeElement;
-  document.getElementById('modal-body').innerHTML=buildRun(idx);
-  modal.hidden=false;document.body.style.overflow='hidden';
-  requestAnimationFrame(()=>{modal.classList.add('show');modal.querySelector('.modal-x').focus();});
+  const n=rn.intervals.length;
+  const rows=rn.intervals.map((iv,i)=>`<div class="exrow"><div class="exrow-main static">
+      <div class="ex-name">Interval ${i+1}</div>
+      <div class="ex-col c-d" data-lab="Distance (m)">${Math.round(iv.dist_m)}</div>
+      <div class="ex-col c-t" data-lab="Time">${fmtDur(iv.dur_s)}</div>
+      <div class="ex-col c-s rp" data-lab="Speed (km/h)">${iv.kmph}</div>
+    </div></div>`).join('');
+  const shape = n>1 ? `${MID} ${n}${X}${Math.round(rn.intervals[0].dist_m)}m` : '';
+  return `<button class="backlink" id="back">${'\u2190'} All sessions</button>
+    <div class="detail-head">
+      <div>
+        <span class="eyebrow"><span class="tick"></span>Conditioning</span>
+        <h2>${label}<span class="gd">.</span></h2>
+      </div>
+      <div class="weekchips"><span class="wchip"><b>${fmtDay(rn.date)}</b></span></div>
+    </div>
+    <div class="dstats">
+      <div class="dstat"><div class="k">Distance</div><div class="v nums">${fmtDist(rn.total_dist_m)}</div></div>
+      <div class="dstat"><div class="k">Avg pace</div><div class="v gold nums">${fmtPace(rn.pace_s_per_km)}<span class="u">/km</span></div></div>
+      <div class="dstat"><div class="k">Avg speed</div><div class="v nums">${rn.avg_kmph}<span class="u">km/h</span></div></div>
+      <div class="dstat"><div class="k">Moving time</div><div class="v nums">${fmtDur(rn.total_dur_s)}</div></div>
+    </div>
+    <div class="glass ex-table runs" style="margin-top:18px">
+      <div class="block">
+        <button class="block-head" data-blocktoggle aria-expanded="true">
+          <span class="block-lab"><span class="tick"></span>Intervals<span class="ss">${shape}</span></span>
+          <span class="block-chev">${CHEV}</span>
+        </button>
+        <div class="block-body">
+          <div class="ex-thead"><span>Interval</span><span>Distance (m)</span><span>Time</span><span>Speed (km/h)</span></div>
+          ${rows}
+        </div>
+      </div>
+    </div>
+    ${footerHTML()}`;
 }
 modal.addEventListener('click',e=>{if(e.target.closest('[data-close]'))closeChart();});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!modal.hidden)closeChart();});
-app.addEventListener('click',e=>{const t=e.target.closest('[data-run]');if(t)openRun(+t.dataset.run);});
+app.addEventListener('click',e=>{const t=e.target.closest('[data-run]');if(t){state.runIdx=+t.dataset.run;state.session=null;render();}});
 app.addEventListener('click',e=>{const t=e.target.closest('[data-toggle]');if(t)openChart(t.dataset.toggle);});
 app.addEventListener('keydown',e=>{const t=e.target.closest('[data-toggle]');if(t&&(e.key==='Enter'||e.key===' ')){e.preventDefault();openChart(t.dataset.toggle);}});
 app.addEventListener('click',e=>{const b=e.target.closest('[data-blocktoggle]');if(!b)return;const blk=b.closest('.block');blk.classList.toggle('collapsed');b.setAttribute('aria-expanded',String(!blk.classList.contains('collapsed')));});
