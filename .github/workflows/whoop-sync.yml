@@ -20,6 +20,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0     # full history so the squash-amend below is safe
 
       - uses: actions/setup-python@v5
         with:
@@ -54,11 +56,20 @@ jobs:
             echo "no new token to save"
           fi
 
-      - name: Commit if changed
+      - name: Commit if changed (squash consecutive syncs)
         if: steps.fetch.outputs.skipped != 'true' && hashFiles('docs/whoop_data.json') != ''
         run: |
           git config user.name  "whoop-sync[bot]"
           git config user.email "whoop-sync@users.noreply.github.com"
           git add docs/whoop_data.json
-          git commit -m "WHOOP sync: $(date -u +%Y-%m-%d)" || { echo "no changes"; exit 0; }
-          git push
+          git diff --cached --quiet && { echo "no changes"; exit 0; }
+          MSG="WHOOP sync: $(date -u +'%Y-%m-%d %H:%M')Z"
+          # keep history clean: if the tip is already a sync commit, fold this
+          # update into it instead of stacking a new commit every hour
+          if [ "$(git log -1 --pretty=%an)" = "whoop-sync[bot]" ]; then
+            git commit --amend -m "$MSG"
+            git push --force-with-lease origin main
+          else
+            git commit -m "$MSG"
+            git push origin main
+          fi
