@@ -1656,11 +1656,21 @@ function buildWhoop(j){
   // the PREVIOUS calendar day; label each cycle by the wake date of its sleep instead
   const cycleDay={};
   scored(j.sleep).filter(x=>!x.nap).forEach(x=>{cycleDay[x.cycle_id]=(x.end||x.start).slice(0,10);});
-  const str=scored(j.cycle).map(x=>({date:cycleDay[x.id]||(x.end||x.start||x.created_at).slice(0,10),
-      live:!x.end,
+  // one entry per day: a cycle with no sleep in range falls back to its end date,
+  // which can collide with the real day's cycle (e.g. the pre-programme 27 Jun day
+  // surfacing as a second 28 Jun) - sleep-mapped cycles always win the collision
+  const byDay={};
+  scored(j.cycle).slice().sort((a,b)=>a.start<b.start?-1:1).forEach(x=>{
+    const mapped=!!cycleDay[x.id];
+    const date=cycleDay[x.id]||(x.end||x.start||x.created_at).slice(0,10);
+    if(date<WSTART||x.score.strain==null) return;
+    const cur=byDay[date];
+    if(cur&&cur.mapped&&!mapped) return;
+    byDay[date]={date:date, mapped:mapped, live:!x.end,
       strain:x.score.strain, kcal:(x.score.kilojoule||0)/4.184,
-      avghr:x.score.average_heart_rate, maxhr:x.score.max_heart_rate}))
-    .filter(d=>d.date>=WSTART&&d.strain!=null).sort(asc);
+      avghr:x.score.average_heart_rate, maxhr:x.score.max_heart_rate};
+  });
+  const str=Object.values(byDay).sort(asc);
   // workouts -> map of date -> sport names (walking excluded: auto-detected background walks)
   const woByDate={};
   scored(j.workout).map(x=>({date:(x.start||x.created_at||'').slice(0,10), sport:(x.sport_name||'workout')}))
