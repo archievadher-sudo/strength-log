@@ -5,7 +5,7 @@ name: WHOOP sync
 
 on:
   schedule:
-    - cron: "20 11 * * *"   # 11:20 UTC daily (after morning recovery is finalised)
+    - cron: "20 * * * *"     # hourly at :20 — intraday strain updates; recovery/sleep finalise after morning sync
   workflow_dispatch: {}      # manual "Run workflow" button
 
 permissions:
