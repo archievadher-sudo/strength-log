@@ -1652,7 +1652,12 @@ function buildWhoop(j){
         rr:x.score.respiratory_rate, asleep_ms:asleep, hours:asleep/3600000,
         cycles:ss.sleep_cycle_count, dist:ss.disturbance_count};})
     .filter(d=>d.date>=WSTART).sort(asc);
-  const str=scored(j.cycle).map(x=>({date:(x.start||x.created_at).slice(0,10),
+  // a WHOOP cycle runs sleep-onset -> sleep-onset, so its UTC start date is often
+  // the PREVIOUS calendar day; label each cycle by the wake date of its sleep instead
+  const cycleDay={};
+  scored(j.sleep).filter(x=>!x.nap).forEach(x=>{cycleDay[x.cycle_id]=(x.end||x.start).slice(0,10);});
+  const str=scored(j.cycle).map(x=>({date:cycleDay[x.id]||(x.end||x.start||x.created_at).slice(0,10),
+      live:!x.end,
       strain:x.score.strain, kcal:(x.score.kilojoule||0)/4.184,
       avghr:x.score.average_heart_rate, maxhr:x.score.max_heart_rate}))
     .filter(d=>d.date>=WSTART&&d.strain!=null).sort(asc);
@@ -1689,6 +1694,7 @@ function strainZone(v){const lab=v>=18?'All out':v>=14?'Strenuous':v>=10?'Modera
 /* scope + averaging helpers */
 function whoopInScope(series,scope){return scope==='all'?series:series.filter(d=>mondayISO(d.date)===scope);}
 function wavg(a,pick){const v=a.map(pick).filter(x=>x!=null&&!isNaN(x));return v.length? v.reduce((s,x)=>s+x,0)/v.length : null;}
+function noLive(a){return a.filter(d=>!d.live);}  // drop the in-progress day from averages
 function zStyle(z){return 'background:'+z.bg+';color:'+z.c;}
 function zPill(z){return '<span class="prpill" style="color:'+z.c+';background:'+z.bg+'">'+DOT+' '+z.lab+'</span>';}
 
@@ -1746,13 +1752,13 @@ const WHOOP_DOMAINS={
     note:'Strain is WHOOP\u2019s 0'+NDASH+'21 scale for the cardiovascular load you built up across the whole day.',
     tile:s=>{const l=s[s.length-1],z=strainZone(l.strain);return{
       tag:r1(l.strain), tagStyle:'background:'+z.bg+';color:'+z.c,
-      big:r1(l.strain), unit:'', sub:'day strain',
-      meta:fmtDay(l.date)+' '+MID+' '+r0(l.kcal)+' kcal '+MID+' avg '+r0(l.avghr)+'bpm',
+      big:r1(l.strain), unit:'', sub:l.live?'strain so far':'day strain',
+      meta:(l.live?'Today so far':fmtDay(l.date))+' '+MID+' '+r0(l.kcal)+' kcal '+MID+' avg '+r0(l.avghr)+'bpm',
       pill:'<span class="prpill" style="color:'+z.c+';background:'+z.bg+'">'+DOT+' '+z.lab+'</span>'};},
-    week:s=>{const a=wavg(s,d=>d.strain),z=strainZone(a);return{
+    week:s=>{const nl0=noLive(s),nl=nl0.length?nl0:s;const a=wavg(nl,d=>d.strain),z=strainZone(a);return{
       tag:r1(a), tagStyle:zStyle(z),
       big:r1(a), unit:'', sub:'avg day strain',
-      meta:s.length+' day'+(s.length===1?'':'s')+' '+MID+' peak '+r1(Math.max(...s.map(d=>d.strain)))+' '+MID+' '+r0(wavg(s,d=>d.kcal))+' kcal/day',
+      meta:nl.length+' day'+(nl.length===1?'':'s')+' '+MID+' peak '+r1(Math.max(...nl.map(d=>d.strain)))+' '+MID+' '+r0(wavg(nl,d=>d.kcal))+' kcal/day',
       pill:zPill(z)};},
     main:{pick:d=>d.strain,fmt:r1},
     stats:s=>{const l=s[s.length-1];return[
@@ -1780,9 +1786,10 @@ function whoopTiles(){
     if(!s.length) return whoopGhost(dom.tileName,'No WHOOP data this week','View a logged week');
     const t = state.scope==='all' ? dom.tile(all) : dom.week(s);
     let pills=t.pill;
-    if(state.scope==='all'&&all.length>1){
-      const a=wavg(all,dom.main.pick);
-      pills+=' <span class="prpill" style="color:var(--gold-deep);background:var(--gold-pale)">avg '+dom.main.fmt(a)+' '+MID+' '+all.length+' days</span>';
+    const cs=noLive(all);
+    if(state.scope==='all'&&cs.length>1){
+      const a=wavg(cs,dom.main.pick);
+      pills+=' <span class="prpill" style="color:var(--gold-deep);background:var(--gold-pale)">avg '+dom.main.fmt(a)+' '+MID+' '+cs.length+' days</span>';
     }
     return '<div class="glass tile done" data-whoop="'+k+'" data-tilt>'
       +'<div class="tile-top"><span class="tile-name" style="font-size:18px">'+dom.tileName+'</span><span class="tag done" style="'+(t.tagStyle||'')+'">'+t.tag+'</span></div>'
@@ -1797,7 +1804,8 @@ function whoopDetailHTML(key){
   if(!n) return '<button class="backlink" id="back">'+'\u2190'+' All sessions</button><div class="detail-head"><div><span class="eyebrow"><span class="tick"></span>'+dom.eyebrow+'</span><h2>'+dom.detailTitle+'<span class="gd">.</span></h2></div></div><div class="dstats">No WHOOP data in range yet.</div>';
   const gran=state.whoopGran||'daily';
   const stArr=dom.stats(s);
-  if(n>1) stArr.push({k:'Avg '+MID+' '+n+' days', v:dom.main.fmt(wavg(s,dom.main.pick))});
+  const nlAll=noLive(s);
+  if(nlAll.length>1) stArr.push({k:'Avg '+MID+' '+nlAll.length+' days', v:dom.main.fmt(wavg(nlAll,dom.main.pick))});
   const stats=stArr.map(t=>'<div class="dstat"><div class="k">'+t.k+'</div><div class="v '+(t.gold?'gold':'')+' nums">'+t.v+'</div></div>').join('');
   const granSeg='<div class="filter" style="margin:16px 0 0"><span class="lab">View</span><div class="seg" id="wgran">'
     +[['daily','Daily'],['weekly','Weekly'],['monthly','Monthly']].map(g=>'<button class="'+(g[0]===gran?'on':'')+'" data-wgran="'+g[0]+'">'+g[1]+'</button>').join('')
@@ -1816,9 +1824,9 @@ function whoopDetailHTML(key){
     thead='<div class="ex-thead"><span>Metric</span><span class="tcol">Avg</span><span class="tcol">Avg</span><span class="tcol">Trend</span><span></span><span></span></div>';
     blockSub=MID+' '+(gran==='weekly'?'weekly':'monthly')+' averages';
     rows=dom.metrics.map(m=>{
-      const vals=groups.map(g=>wavg(g.days,m.pick));
+      const vals=groups.map(g=>{const nl=noLive(g.days);return nl.length?wavg(nl,m.pick):null;});
       if(vals.every(v=>v==null)) return '';
-      const daily=s.filter(d=>m.pick(d)!=null&&!isNaN(m.pick(d))).map(d=>({date:d.date,val:m.pick(d)}));
+      const daily=s.filter(d=>m.pick(d)!=null&&!isNaN(m.pick(d))).map(d=>({date:d.date,val:m.pick(d),live:d.live}));
       const id='wh'+(exSeq++); WREG[id]={name:m.name,unit:m.unit,fmt:m.fmt,note:dom.note,series:daily};
       const fv=v=>v==null?'\u2014':m.fmt(v)+(m.unit?'<span class="wu">'+m.unit+'</span>':'');
       return '<div class="exrow" data-ex="'+id+'"><div class="exrow-main" data-whooptoggle="'+id+'" role="button" tabindex="0" aria-label="Open '+m.name+' chart">'
@@ -1833,7 +1841,7 @@ function whoopDetailHTML(key){
     thead='<div class="ex-thead"><span>Metric</span><span class="tcol">Latest</span><span class="tcol">Trend</span><span></span><span></span></div>';
     blockSub=MID+' last '+fmtDay(latest.date);
     rows=dom.metrics.map(m=>{
-      const pairs=s.filter(d=>m.pick(d)!=null&&!isNaN(m.pick(d))).map(d=>({date:d.date,val:m.pick(d)}));
+      const pairs=s.filter(d=>m.pick(d)!=null&&!isNaN(m.pick(d))).map(d=>({date:d.date,val:m.pick(d),live:d.live}));
       if(!pairs.length) return '';
       const id='wh'+(exSeq++); WREG[id]={name:m.name,unit:m.unit,fmt:m.fmt,note:dom.note,series:pairs};
       const ser=pairs.map(p=>p.val), last=ser[ser.length-1];
@@ -1871,13 +1879,15 @@ function buildWhoopChart(id,gran){
   gran=gran||'daily';
   const w=WREG[id];
   if(gran!=='daily'){
-    const groups=whoopGroups(w.series,gran);
-    const pts=groups.map((g,i)=>{const a=wavg(g.days,d=>d.val),nw=woCount(g.days);
-      return {i, val:a,
+    const groups=whoopGroups(w.series,gran)
+      .map(g=>{const nl=noLive(g.days);return {key:g.key,label:g.label,days:g.days,avg:nl.length?wavg(nl,d=>d.val):null,nDone:nl.length};})
+      .filter(g=>g.avg!=null);
+    const pts=groups.map((g,i)=>{const nw=woCount(g.days);
+      return {i, val:g.avg,
         xTop: gran==='weekly'? fmtDay(g.key) : MON[+g.key.split('-')[1]-1],
         xBot: gran==='weekly'? '' : g.key.split('-')[0],
-        roD:g.label, roV:(a==null?'\u2014':w.fmt(a))+(w.unit?' '+w.unit:''),
-        roS:g.days.length+' day'+(g.days.length===1?'':'s')+' '+MID+' '+(nw?nw+' workout'+(nw===1?'':'s'):'no workouts')};});
+        roD:g.label, roV:w.fmt(g.avg)+(w.unit?' '+w.unit:''),
+        roS:g.nDone+' day'+(g.nDone===1?'':'s')+' '+MID+' '+(nw?nw+' workout'+(nw===1?'':'s'):'no workouts')};});
     const glab=gran==='weekly'?'week':'month';
     return chartSVG(id, pts, {title:w.name, sub:capW(gran)+' average '+MID+' '+groups.length+' '+glab+(groups.length===1?'':'s'),
       metric:w.name+(w.unit?' ('+w.unit+')':''), note:w.note});
@@ -1885,7 +1895,7 @@ function buildWhoopChart(id,gran){
   const N=w.series.length, step=Math.max(1,Math.ceil(N/6));
   const pts=w.series.map((p,i)=>{const lab=(i%step===0)||i===N-1;const dd=new Date(p.date+'T00:00:00');const wo=woFor(p.date);
     return {i, val:p.val, xTop: lab?String(dd.getDate()):'', xBot: lab?MON[dd.getMonth()]:'', mark:wo.length>0,
-      roD:fmtDay(p.date), roV:w.fmt(p.val)+(w.unit?' '+w.unit:''),
+      roD:fmtDay(p.date)+(p.live?' '+MID+' so far':''), roV:w.fmt(p.val)+(w.unit?' '+w.unit:''),
       roS:wo.length? wo.map(capW).join(' '+MID+' ') : 'Rest day'};});
   const note = N<2 ? 'Only one day logged so far '+MID+' the line grows as WHOOP syncs each morning.' : w.note;
   return chartSVG(id, pts, {title:w.name, sub:'Daily '+MID+' '+N+' day'+(N===1?'':'s'), metric:w.name+(w.unit?' ('+w.unit+')':''), note:note, markLabel:'Workout day'});
