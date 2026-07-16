@@ -122,13 +122,14 @@ main{padding:28px 0 72px}
 .hero-spark-meta{margin-top:6px;display:flex;justify-content:space-between;font-size:11px;color:rgba(250,247,240,.55);letter-spacing:.02em}
 .hero-div{margin-top:24px;height:1px;background:rgba(250,247,240,.1)}
 .hero-stats{margin-top:18px;display:grid;grid-template-columns:repeat(4,1fr);gap:24px}
+.hero-stats.five{grid-template-columns:repeat(5,1fr);gap:20px}
 .hstat{position:relative;display:flex;flex-direction:column;gap:5px}
 .hstat+.hstat::before{content:"";position:absolute;left:-12px;top:4px;bottom:4px;width:1px;background:rgba(250,247,240,.1)}
 .hstat .k{font-weight:600;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:rgba(250,247,240,.55)}
 .hstat .v{font-family:var(--font-display);font-weight:800;font-size:22px;letter-spacing:-.02em;color:var(--on-hero);white-space:nowrap}
 .hstat .v.gold{color:var(--gold)}
 .hstat .p{font-size:12px;color:rgba(250,247,240,.55)}
-@media(max-width:860px){.hero-top{grid-template-columns:1fr}.hero-spark-wrap{min-width:0;text-align:left}.hero-stats{grid-template-columns:1fr 1fr;gap:16px}}
+@media(max-width:860px){.hero-top{grid-template-columns:1fr}.hero-spark-wrap{min-width:0;text-align:left}.hero-stats,.hero-stats.five{grid-template-columns:1fr 1fr;gap:16px}}
 
 /* === WEEK FILTER === */
 .filter{margin:26px 0 8px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
@@ -1350,6 +1351,7 @@ function summaryFor(scope){
 }
 function heroHTML(){
   const s=summaryFor(state.scope);
+  const wh=whoopHeroStat(state.scope); if(wh) s.stats.push(wh);
   const stats=s.stats.map(t=>`<div class="hstat"><div class="k">${t.k}</div><div class="v ${t.gold?'gold':''} nums">${t.v}</div><div class="p">${t.p}</div></div>`).join('');
   return `<section class="hero">
     <div class="hero-top">
@@ -1364,7 +1366,7 @@ function heroHTML(){
       </div>
     </div>
     <div class="hero-div"></div>
-    <div class="hero-stats">${stats}</div>
+    <div class="hero-stats${s.stats.length>4?' five':''}">${stats}</div>
   </section>`;
 }
 
@@ -1659,6 +1661,12 @@ function sleepZone(v){ if(v>=70)return{c:'var(--pos)',bg:'var(--pos-soft)',lab:'
 function strainZone(v){const lab=v>=18?'All out':v>=14?'Strenuous':v>=10?'Moderate':'Light';
   return{c:'var(--gold-deep)',bg:'var(--gold-pale)',lab:lab};}
 
+/* scope + averaging helpers */
+function whoopInScope(series,scope){return scope==='all'?series:series.filter(d=>mondayISO(d.date)===scope);}
+function wavg(a,pick){const v=a.map(pick).filter(x=>x!=null&&!isNaN(x));return v.length? v.reduce((s,x)=>s+x,0)/v.length : null;}
+function zStyle(z){return 'background:'+z.bg+';color:'+z.c;}
+function zPill(z){return '<span class="prpill" style="color:'+z.c+';background:'+z.bg+'">'+DOT+' '+z.lab+'</span>';}
+
 const WHOOP_DOMAINS={
   recovery:{series:'recovery', tileName:'Recovery', eyebrow:'Wellness', detailTitle:'Recovery',
     rowsLabel:'Readiness signals',
@@ -1668,6 +1676,12 @@ const WHOOP_DOMAINS={
       big:r0(l.score), unit:'%', sub:'recovered',
       meta:fmtDay(l.date)+' '+MID+' HRV '+r0(l.hrv)+'ms '+MID+' RHR '+r0(l.rhr),
       pill:'<span class="prpill" style="color:'+z.c+';background:'+z.bg+'">'+DOT+' '+z.lab+'</span>'};},
+    week:s=>{const a=wavg(s,d=>d.score),z=recZone(a);return{
+      tag:DOT+' '+r0(a)+'%', tagStyle:zStyle(z),
+      big:r0(a), unit:'%', sub:'avg recovery',
+      meta:s.length+' day'+(s.length===1?'':'s')+' '+MID+' HRV '+r0(wavg(s,d=>d.hrv))+'ms '+MID+' RHR '+r0(wavg(s,d=>d.rhr)),
+      pill:zPill(z)};},
+    main:{pick:d=>d.score,fmt:v=>r0(v)+'%'},
     stats:s=>{const l=s[s.length-1];return[
       {k:'Recovery',v:r0(l.score)+'%',gold:1},{k:'HRV',v:r1(l.hrv)+' ms'},
       {k:'Resting HR',v:r0(l.rhr)+' bpm'},{k:'Blood O\u2082',v:r1(l.spo2)+'%'}];},
@@ -1685,6 +1699,12 @@ const WHOOP_DOMAINS={
       big:r0(l.perf), unit:'%', sub:'sleep score',
       meta:fmtDay(l.date)+' '+MID+' '+whoopHours(l.asleep_ms)+' asleep '+MID+' '+r0(l.eff)+'% eff',
       pill:'<span class="prpill" style="color:'+z.c+';background:'+z.bg+'">'+DOT+' '+z.lab+'</span>'};},
+    week:s=>{const a=wavg(s,d=>d.perf),z=sleepZone(a);return{
+      tag:DOT+' '+r0(a)+'%', tagStyle:zStyle(z),
+      big:r0(a), unit:'%', sub:'avg sleep score',
+      meta:s.length+' night'+(s.length===1?'':'s')+' '+MID+' '+whoopHours(wavg(s,d=>d.asleep_ms))+' avg '+MID+' '+r0(wavg(s,d=>d.eff))+'% eff',
+      pill:zPill(z)};},
+    main:{pick:d=>d.perf,fmt:v=>r0(v)+'%'},
     stats:s=>{const l=s[s.length-1];return[
       {k:'Performance',v:r0(l.perf)+'%',gold:1},{k:'Time asleep',v:whoopHours(l.asleep_ms)},
       {k:'Efficiency',v:r1(l.eff)+'%'},{k:'Consistency',v:r0(l.cons)+'%'}];},
@@ -1704,6 +1724,12 @@ const WHOOP_DOMAINS={
       big:r1(l.strain), unit:'', sub:'day strain',
       meta:fmtDay(l.date)+' '+MID+' '+r0(l.kcal)+' kcal '+MID+' avg '+r0(l.avghr)+'bpm',
       pill:'<span class="prpill" style="color:'+z.c+';background:'+z.bg+'">'+DOT+' '+z.lab+'</span>'};},
+    week:s=>{const a=wavg(s,d=>d.strain),z=strainZone(a);return{
+      tag:r1(a), tagStyle:zStyle(z),
+      big:r1(a), unit:'', sub:'avg day strain',
+      meta:s.length+' day'+(s.length===1?'':'s')+' '+MID+' peak '+r1(Math.max(...s.map(d=>d.strain)))+' '+MID+' '+r0(wavg(s,d=>d.kcal))+' kcal/day',
+      pill:zPill(z)};},
+    main:{pick:d=>d.strain,fmt:r1},
     stats:s=>{const l=s[s.length-1];return[
       {k:'Day strain',v:r1(l.strain),gold:1},{k:'Active cal',v:r0(l.kcal)+' kcal'},
       {k:'Avg HR',v:r0(l.avghr)+' bpm'},{k:'Max HR',v:r0(l.maxhr)+' bpm'}];},
@@ -1715,29 +1741,38 @@ const WHOOP_DOMAINS={
 };
 const WHOOP_ORDER=['recovery','sleep','strain'];
 
-function whoopGhost(name,msg){
+function whoopGhost(name,msg,foot){
   return '<div class="glass tile ghost"><div class="tile-top"><span class="tile-name" style="font-size:18px">'+name+'</span><span class="tag ghost">'+'\u2014'+'</span></div>'
     +'<div class="tile-meta">'+msg+'.</div>'
-    +'<div class="tile-foot"><span class="tile-go" style="color:var(--content-tertiary)">Awaiting sync</span></div></div>';
+    +'<div class="tile-foot"><span class="tile-go" style="color:var(--content-tertiary)">'+(foot||'Awaiting sync')+'</span></div></div>';
 }
 function whoopTiles(){
   if(WHOOP===null) return WHOOP_ORDER.map(k=>whoopGhost(WHOOP_DOMAINS[k].tileName,'Syncing WHOOP'+'\u2026')).join('');
   if(WHOOP===false) return WHOOP_ORDER.map(k=>whoopGhost(WHOOP_DOMAINS[k].tileName,'WHOOP not synced yet')).join('');
-  return WHOOP_ORDER.map(k=>{const dom=WHOOP_DOMAINS[k],s=WHOOP[dom.series];
-    if(!s||!s.length) return whoopGhost(dom.tileName,'No data in range');
-    const t=dom.tile(s);
+  return WHOOP_ORDER.map(k=>{const dom=WHOOP_DOMAINS[k],all=WHOOP[dom.series];
+    if(!all||!all.length) return whoopGhost(dom.tileName,'No data in range');
+    const s=whoopInScope(all,state.scope);
+    if(!s.length) return whoopGhost(dom.tileName,'No WHOOP data this week','View a logged week');
+    const t = state.scope==='all' ? dom.tile(all) : dom.week(s);
+    let pills=t.pill;
+    if(state.scope==='all'&&all.length>1){
+      const a=wavg(all,dom.main.pick);
+      pills+=' <span class="prpill" style="color:var(--gold-deep);background:var(--gold-pale)">avg '+dom.main.fmt(a)+' '+MID+' '+all.length+' days</span>';
+    }
     return '<div class="glass tile done" data-whoop="'+k+'" data-tilt>'
       +'<div class="tile-top"><span class="tile-name" style="font-size:18px">'+dom.tileName+'</span><span class="tag done" style="'+(t.tagStyle||'')+'">'+t.tag+'</span></div>'
       +'<div class="tile-meta">'+t.meta+'</div>'
       +'<div class="tile-foot"><span class="big nums">'+t.big+(t.unit||'')+' <small>'+t.sub+'</small></span><span class="tile-go">Trend '+CHEV+'</span></div>'
-      +'<div style="margin-top:12px">'+t.pill+'</div></div>';
+      +'<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">'+pills+'</div></div>';
   }).join('');
 }
 function whoopDetailHTML(key){
   const dom=WHOOP_DOMAINS[key], s=(WHOOP&&WHOOP[dom.series])||[];
   const n=s.length, latest=s[n-1];
   if(!n) return '<button class="backlink" id="back">'+'\u2190'+' All sessions</button><div class="detail-head"><div><span class="eyebrow"><span class="tick"></span>'+dom.eyebrow+'</span><h2>'+dom.detailTitle+'<span class="gd">.</span></h2></div></div><div class="dstats">No WHOOP data in range yet.</div>';
-  const stats=dom.stats(s).map(t=>'<div class="dstat"><div class="k">'+t.k+'</div><div class="v '+(t.gold?'gold':'')+' nums">'+t.v+'</div></div>').join('');
+  const stArr=dom.stats(s);
+  if(n>1) stArr.push({k:'Avg '+MID+' '+n+' days', v:dom.main.fmt(wavg(s,dom.main.pick))});
+  const stats=stArr.map(t=>'<div class="dstat"><div class="k">'+t.k+'</div><div class="v '+(t.gold?'gold':'')+' nums">'+t.v+'</div></div>').join('');
   const rows=dom.metrics.map(m=>{
     const pairs=s.filter(d=>m.pick(d)!=null&&!isNaN(m.pick(d))).map(d=>({date:d.date,val:m.pick(d)}));
     if(!pairs.length) return '';
@@ -1778,6 +1813,18 @@ function buildWhoopChart(id){
   return chartSVG(id, pts, {title:w.name, sub:'Daily '+MID+' '+N+' day'+(N===1?'':'s'), metric:w.name+(w.unit?' ('+w.unit+')':''), note:note});
 }
 function openWhoopChart(id){openModalChart(buildWhoopChart(id),id);}
+/* recovery stat for the hero (scope-aware) */
+function whoopHeroStat(scope){
+  if(!WHOOP||!WHOOP.recovery||!WHOOP.recovery.length) return null;
+  const all=WHOOP.recovery;
+  if(scope==='all'){
+    const l=all[all.length-1];
+    return {k:'Recovery',v:r0(l.score)+'%',p:'avg '+r0(wavg(all,d=>d.score))+'% '+MID+' '+all.length+' days'};
+  }
+  const s=whoopInScope(all,scope);
+  if(!s.length) return {k:'Recovery',v:'\u2014',p:'no WHOOP data'};
+  return {k:'Recovery',v:r0(wavg(s,d=>d.score))+'%',p:'week avg '+MID+' '+s.length+' day'+(s.length===1?'':'s')};
+}
 function whoopFooterHTML(){
   return '<footer><div class="legend"><b>Reading it:</b> these come straight from <b>WHOOP</b>, synced automatically each morning and bounded to your programme start (28 Jun). Tap any metric to see its <b>daily trend</b>; hover the chart to scrub exact values.'
     +'<br><br><b>Recovery</b> blends HRV, resting HR and sleep into a readiness %. <b>Sleep</b> is how much of your needed sleep you got. <b>Strain</b> is WHOOP\u2019s 0'+NDASH+'21 cardiovascular load for the day.</div>'
