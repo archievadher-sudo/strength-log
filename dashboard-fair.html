@@ -1671,14 +1671,13 @@ function buildWhoop(j){
       avghr:x.score.average_heart_rate, maxhr:x.score.max_heart_rate};
   });
   const str=Object.values(byDay).sort(asc);
-  // workouts -> map of date -> sport names (walking excluded: auto-detected background walks)
-  const woByDate={};
-  scored(j.workout).map(x=>({date:(x.start||x.created_at||'').slice(0,10), sport:(x.sport_name||'workout')}))
-    .filter(w=>w.date>=WSTART && w.sport!=='walking')
-    .forEach(w=>{(woByDate[w.date]||(woByDate[w.date]=[])).push(w.sport);});
-  return {recovery:rec, sleep:slp, strain:str, woByDate:woByDate, synced:(j.fetched||'').slice(0,10)};
+  return {recovery:rec, sleep:slp, strain:str, synced:(j.fetched||'').slice(0,10)};
 }
-function woFor(date){return (WHOOP&&WHOOP.woByDate&&WHOOP.woByDate[date])||[];}
+/* training days come from the RepCount log (the source of truth), not WHOOP's workout detection */
+const TRAINED={};
+OCC.forEach(o=>{(TRAINED[o.date]||(TRAINED[o.date]=[])).push(o.name);});
+RUNS.forEach(r=>{(TRAINED[r.date]||(TRAINED[r.date]=[])).push(RUN_LABEL[r.type]||r.name);});
+function woFor(date){return TRAINED[date]||[];}
 function woCount(days){let c=0;days.forEach(d=>{c+=woFor(d.date).length;});return c;}
 function capW(s){return s.charAt(0).toUpperCase()+s.slice(1);}
 function monthLabel(k){const p=k.split('-');return MON[+p[1]-1]+' '+p[0];}
@@ -1897,7 +1896,7 @@ function buildWhoopChart(id,gran){
         xTop: gran==='weekly'? fmtDay(g.key) : MON[+g.key.split('-')[1]-1],
         xBot: gran==='weekly'? '' : g.key.split('-')[0],
         roD:g.label, roV:w.fmt(g.avg)+(w.unit?' '+w.unit:''),
-        roS:g.nDone+' day'+(g.nDone===1?'':'s')+' '+MID+' '+(nw?nw+' workout'+(nw===1?'':'s'):'no workouts')};});
+        roS:g.nDone+' day'+(g.nDone===1?'':'s')+' '+MID+' '+(nw?nw+' session'+(nw===1?'':'s'):'no sessions')};});
     const glab=gran==='weekly'?'week':'month';
     return chartSVG(id, pts, {title:w.name, sub:capW(gran)+' average '+MID+' '+groups.length+' '+glab+(groups.length===1?'':'s'),
       metric:w.name+(w.unit?' ('+w.unit+')':''), note:w.note});
@@ -1906,9 +1905,9 @@ function buildWhoopChart(id,gran){
   const pts=w.series.map((p,i)=>{const lab=(i%step===0)||i===N-1;const dd=new Date(p.date+'T00:00:00');const wo=woFor(p.date);
     return {i, val:p.val, xTop: lab?String(dd.getDate()):'', xBot: lab?MON[dd.getMonth()]:'', mark:wo.length>0,
       roD:fmtDay(p.date)+(p.live?' '+MID+' so far':''), roV:w.fmt(p.val)+(w.unit?' '+w.unit:''),
-      roS:wo.length? wo.map(capW).join(' '+MID+' ') : 'Rest day'};});
+      roS:wo.length? wo.join(' '+MID+' ') : 'Rest day'};});
   const note = N<2 ? 'Only one day logged so far '+MID+' the line grows as WHOOP syncs each morning.' : w.note;
-  return chartSVG(id, pts, {title:w.name, sub:'Daily '+MID+' '+N+' day'+(N===1?'':'s'), metric:w.name+(w.unit?' ('+w.unit+')':''), note:note, markLabel:'Workout day'});
+  return chartSVG(id, pts, {title:w.name, sub:'Daily '+MID+' '+N+' day'+(N===1?'':'s'), metric:w.name+(w.unit?' ('+w.unit+')':''), note:note, markLabel:'Training day'});
 }
 function whoopModalHTML(id,gran){
   const segs=[['daily','Daily'],['weekly','Weekly'],['monthly','Monthly']].map(g=>
@@ -1929,7 +1928,7 @@ function whoopHeroStat(scope){
   return {k:'Recovery',v:r0(wavg(s,d=>d.score))+'%',p:'week avg '+MID+' '+s.length+' day'+(s.length===1?'':'s')};
 }
 function whoopFooterHTML(){
-  return '<footer><div class="legend"><b>Reading it:</b> these come straight from <b>WHOOP</b>, refreshed automatically every hour and bounded to your programme start (28 Jun). Switch the <b>View</b> between daily, weekly and monthly '+NDASH+' weekly and monthly compare two periods side by side, like the strength sessions. Tap any metric for its trend chart (it opens in the view you were on); gold dots under a daily chart mark <b>workout days</b>, and hovering shows what you trained.'
+  return '<footer><div class="legend"><b>Reading it:</b> these come straight from <b>WHOOP</b>, refreshed automatically every hour and bounded to your programme start (28 Jun). Switch the <b>View</b> between daily, weekly and monthly '+NDASH+' weekly and monthly compare two periods side by side, like the strength sessions. Tap any metric for its trend chart (it opens in the view you were on); gold dots under a daily chart mark <b>training days from your log</b> '+NDASH+' hovering names the session (GPP S&amp;C, sprint, long run).'
     +'<br><br><b>Recovery</b> blends HRV, resting HR and sleep into a readiness %. <b>Sleep</b> is how much of your needed sleep you got. <b>Strain</b> is WHOOP\u2019s 0'+NDASH+'21 cardiovascular load for the day.</div>'
     +'<div class="fine">Source: WHOOP API '+MID+' refreshed hourly.</div></footer>';
 }
