@@ -1392,22 +1392,36 @@ const X="\u00d7", MID="\u00b7", NDASH="\u2013", ARWU="\u2191", CHEV="\u203a";
 /* ---- metrics ---- */
 const e1rm=([w,r])=> w>0 ? w*(1+r/30) : r;
 function bestSet(wk){let b=null;for(const s of (wk.sets||[])){const e=e1rm(s);if(!b||e>b.e)b={w:s[0],r:s[1],e};}return b;}
+// progression metric = AVERAGE estimated 1RM across every set that week, so an
+// improvement in any set (not only the top set) moves the trend. BW -> avg reps.
+function avgE1(wk){const s=wk.sets||[];if(!s.length)return 0;return s.reduce((a,x)=>a+e1rm(x),0)/s.length;}
+function isBWwk(wk){const s=wk.sets||[];return s.length>0&&s.every(x=>x[0]===0);}
+function wkWork(wk){return (wk.sets||[]).reduce((a,x)=>a+(x[0]>0?x[0]*x[1]:x[1]),0);}
+const rnd1=v=>Math.round(v*10)/10;
+// direction + label comparing week A -> week B on the average-set metric
+function progDelta(wkA,wkB){
+  const sa=wkA&&wkA.sets||[], sb=wkB&&wkB.sets||[];
+  if(!sa.length||!sb.length) return {t:'hold'};
+  const bw=isBWwk(wkA)&&isBWwk(wkB);
+  const dv=avgE1(wkB)-avgE1(wkA);
+  if(dv>0.05){const n=rnd1(dv);return {t:'up',x:'+'+n+(bw?' rep'+(n===1?'':'s'):'kg')};}
+  if(dv<-0.05){const n=rnd1(dv);return {t:'down',x:n+(bw?' rep'+(n===-1?'':'s'):'kg')};}
+  const wa=wkWork(wkA), wb=wkWork(wkB);           // avg tied -> break on total work (e.g. added a set)
+  if(wb>wa+0.5) return {t:'up',x:'more work'};
+  if(wb<wa-0.5) return {t:'down',x:'less work'};
+  return {t:'hold'};
+}
 const fmtW=w=> Number.isInteger(w)? String(w): String(w);
 const fmtSet=([w,r])=> w===0? `BW ${X} ${r}` : `${fmtW(w)}kg ${X} ${r}`;
 const setsStr=sets=> sets.map(fmtSet).join(`   ${MID}   `);
 const setsLines=sets=> sets.map(s=>`<span>${fmtSet(s)}</span>`).join('');
 const commas=n=> Math.round(n).toLocaleString('en-US');
 function weekVol(s,i){let v=0;for(const b of s.blocks)for(const e of b.exercises)v+=e.byweek[i].vol;return v;}
-function exSeries(ex){return ex.byweek.map(w=>{const b=bestSet(w);return b?b.e:0;});}
-function exUp(ex){const k=ex.byweek;if(k.length<2)return false;const p=bestSet(k[k.length-2]),l=bestSet(k[k.length-1]);return p&&l&&l.e>p.e+0.01;}
+function exSeries(ex){return ex.byweek.map(w=>avgE1(w));}
+function exUp(ex){const k=ex.byweek;if(k.length<2)return false;return progDelta(k[k.length-2],k[k.length-1]).t==='up';}
 function exDelta(ex){
   const k=ex.byweek;if(k.length<2)return{t:'new'};
-  const p=bestSet(k[k.length-2]),l=bestSet(k[k.length-1]);if(!p||!l)return{t:'hold'};
-  if(l.w>p.w)return{t:'up',x:`+${fmtW(l.w-p.w)}kg`};
-  if(l.r>p.r&&l.w>=p.w)return{t:'up',x:`+${l.r-p.r} rep${l.r-p.r>1?'s':''}`};
-  if(l.e>p.e+0.05)return{t:'up',x:'heavier'};
-  if(l.e<p.e-0.05)return{t:'down',x:'lighter'};
-  return{t:'hold'};
+  return progDelta(k[k.length-2],k[k.length-1]);
 }
 function sessionStats(name){
   const s=DATA.sessions[name];if(!s)return null;
@@ -1516,7 +1530,7 @@ function summaryFor(scope){
     for(const b of s.blocks)for(const e of b.exercises){
       const wk=e.byweek[o.i]; sets+=wk.nsets;
       for(const st of (wk.sets||[])) if(st[0]>0&&(!top||st[0]>top.w)) top={w:st[0],r:st[1],name:e.name};
-      if(o.i>0){const p=bestSet(e.byweek[o.i-1]),l=bestSet(wk); if(p&&l&&l.e>p.e+0.01)up++;}
+      if(o.i>0 && progDelta(e.byweek[o.i-1],wk).t==='up')up++;
     }
     if(o.i===0)firstTimes++;
   }
@@ -1653,15 +1667,8 @@ function detailHTML(name){
             <span class="chev">${CHEV}</span>
           </div></div>`;
       }
-      const eA=bestSet(e.byweek[a]), eB=bestSet(e.byweek[b]);
-      // trend/delta computed from the two chosen columns (B relative to A)
-      let d;
-      if(!eA||!eB) d={t:'hold'};
-      else if(eB.w>eA.w) d={t:'up',x:`+${fmtW(eB.w-eA.w)}kg`};
-      else if(eB.r>eA.r&&eB.w>=eA.w) d={t:'up',x:`+${eB.r-eA.r} rep${eB.r-eA.r>1?'s':''}`};
-      else if(eB.e>eA.e+0.05) d={t:'up',x:'heavier'};
-      else if(eB.e<eA.e-0.05) d={t:'down',x:`\u2212${fmtW((eA.w-eB.w)||0)}kg`.replace('\u22120kg','lower')};
-      else d={t:'hold'};
+      // trend/delta from the average-set metric across the two chosen columns (B vs A)
+      const d=progDelta(e.byweek[a], e.byweek[b]);
       const chip = d.t==='up'?`<span class="delta up"><span class="dv">${ARWU}</span> ${d.x}</span>`
         : d.t==='down'?`<span class="delta hold"><span class="dv">\u2193</span> ${d.x}</span>`
         : `<span class="delta hold">held</span>`;
@@ -1672,7 +1679,7 @@ function detailHTML(name){
         <div class="exrow-main" data-toggle="${id}" role="button" tabindex="0" aria-label="Open ${e.name} chart">
           <div class="ex-name">${e.name}</div>
           ${pair(a,'pa')}${pair(b,'pb')}
-          ${miniSpark([eA?eA.e:0, eB?eB.e:0])}${chip}
+          ${miniSpark([avgE1(e.byweek[a]), avgE1(e.byweek[b])])}${chip}
           <span class="chev">${CHEV}</span>
         </div>
       </div>`;
@@ -1765,16 +1772,16 @@ function buildChart(id){
   const {ex,weeks}=EXREG[id];
   const isBW = ex.byweek.every(w=>(w.sets||[]).every(s=>s[0]===0));
   const n=ex.byweek.length;
-  const pts=ex.byweek.map((wk,i)=>{const b=bestSet(wk);const v=b?b.e:0;return{
+  const pts=ex.byweek.map((wk,i)=>{const v=avgE1(wk);const ns=(wk.sets||[]).length;return{
     i, val:v, xTop:`W${weeks[i].n}`, xBot:fmtDay(weeks[i].date),
     roD:`Week ${weeks[i].n} ${MID} ${fmtDay(weeks[i].date)}`,
-    roV: b? (b.w>0? `${fmtW(b.w)} kg ${MID} ${b.r} reps` : `BW ${MID} ${b.r} reps`) : '\u2014',
-    roS: v>0? `est 1RM ${Math.round(v)}kg` : ''
+    roV: ns? wk.sets.map(fmtSet).join(`  ${MID}  `) : '\u2014',
+    roS: v>0? (isBW? `avg ${rnd1(v)} reps ${MID} ${ns} set${ns===1?'':'s'}` : `avg est 1RM ${rnd1(v)}kg ${MID} ${ns} set${ns===1?'':'s'}`) : ''
   };});
   const note = n<2
-    ? `Only one session logged so far \u2014 the line grows as you repeat <b>${ex.name}</b>.<br>Each point is your best set that week, turned into an estimated 1-rep max: <b>weight &times; (1 + reps &divide; 30)</b>.`
-    : `Each point is your best set that week, turned into an <b>estimated 1-rep max</b> \u2014 <b>weight &times; (1 + reps &divide; 30)</b>. So the line climbs whether you add load <b>or</b> reps.`;
-  return chartSVG(id, pts, {title:ex.name, sub:`Best set per week ${MID} ${n} session${n===1?'':'s'} logged`, metric:isBW?'Top-set reps':'Est. 1-rep max (kg)', note});
+    ? `Only one session logged so far \u2014 the line grows as you repeat <b>${ex.name}</b>.<br>Each point is your <b>average estimated 1-rep max across every set</b> that week \u2014 each set scored as <b>weight &times; (1 + reps &divide; 30)</b>, then averaged.`
+    : `Each point is your <b>average estimated 1-rep max across every set</b> that week \u2014 each set scored as <b>weight &times; (1 + reps &divide; 30)</b>, then averaged. So the line climbs when <b>any</b> set gets heavier or gains reps, not just your top set.`;
+  return chartSVG(id, pts, {title:ex.name, sub:`Avg across sets ${MID} ${n} session${n===1?'':'s'} logged`, metric:isBW?'Avg reps / set':'Avg est. 1-rep max (kg)', note});
 }
 function buildRunChart(id){
   const {e,runs,type}=RUNREG[id];
