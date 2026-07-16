@@ -1751,8 +1751,10 @@ function chartSVG(id, pts, cfg){
         +`<text x="${p.x.toFixed(1)}" y="${H-5}" text-anchor="middle" font-family="var(--font-ui)" font-size="11" fill="var(--content-tertiary)">${p.xBot}</text>`;});
   const areaSVG = n>1? `<defs><linearGradient id="a${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--gold)" stop-opacity=".26"/><stop offset="100%" stop-color="var(--gold)" stop-opacity="0"/></linearGradient></defs><path d="${area}" fill="url(#a${id})"/>` : '';
   const lineSVG = n>1? `<path d="${line}" fill="none" stroke="var(--gold)" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>` : '';
-  let marks="";pts.forEach(p=>{if(p.mark)marks+=`<circle cx="${p.x.toFixed(1)}" cy="${H-padB+11}" r="3.4" fill="var(--gold)" stroke="var(--surface-primary)" stroke-width="1.4"/>`;});
-  const legend2 = cfg.markLabel? `<span class="lg"><span class="sw" style="background:var(--gold);border-radius:999px"></span>${cfg.markLabel}</span>` : '';
+  // training days: a gold diamond ON the data point, so the marker sits with the metric
+  let marks="";pts.forEach(p=>{if(p.mark){const x=+p.x.toFixed(1),y=+p.y.toFixed(1),r=5.5;
+    marks+=`<polygon points="${x},${(y-r).toFixed(1)} ${(x+r).toFixed(1)},${y} ${x},${(y+r).toFixed(1)} ${(x-r).toFixed(1)},${y}" fill="var(--gold)" stroke="var(--surface-primary)" stroke-width="1.8"/>`;}});
+  const legend2 = cfg.markLabel? `<span class="lg"><span class="sw" style="background:var(--gold);width:9px;height:9px;border-radius:2px;transform:rotate(45deg)"></span>${cfg.markLabel}</span>` : '';
   return `<div class="chart-head">
       <div><div class="chart-title">${cfg.title}</div><div class="chart-sub">${cfg.sub}</div></div>
       <span class="chart-legend"><span class="lg"><span class="sw" style="background:var(--gold)"></span>${cfg.metric}</span>${legend2}</span></div>
