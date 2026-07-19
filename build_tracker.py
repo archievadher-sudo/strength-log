@@ -46,6 +46,19 @@ CANON = {
     "seated db lateral raise": "Seated DB lateral raise",
     "seated db curl to press": "Seated DB curl-to-press",
     "tricep pushdown cable rope": "Tricep pushdown (rope)",
+    # GPP S&C 3
+    "3 point lunge": "3-point lunge",
+    "chest supported w": "Chest-supported W-raise",
+    "trap bar deadlift": "Trap-bar deadlift",
+    "inverted row": "Inverted row",
+    "plank tap": "Plank tap",
+    "rfe split squat": "RFE split squat",
+    "supine dumbell press": "Supine dumbbell press",
+    "single arm cable high to low": "Single-arm cable high-to-low",
+    "kettlebell squats": "Kettlebell squat",
+    "single leg calf raises": "Single-leg calf raise",
+    "cable curl": "Cable curl",
+    "seated tricep extension": "Seated tricep extension",
 }
 
 # ---- programme definition: superset blocks per session ------------------
@@ -63,6 +76,13 @@ PROGRAMME = {
         ("Block 1", ["RDL", "Single-arm overhead press", "Deadbug"]),
         ("Block 2", ["Split squat", "Floor chest press", "Dumbbell row (bench)"]),
         ("Block 3", ["Seated DB lateral raise", "Seated DB curl-to-press", "Tricep pushdown (rope)"]),
+    ],
+    "GPP S&C 3": [
+        ("Prep",  ["3-point lunge", "Chest-supported W-raise"]),
+        ("Block 1", ["Trap-bar deadlift", "Inverted row", "Plank tap"]),
+        ("Block 2", ["RFE split squat", "Supine dumbbell press", "Single-arm cable high-to-low"]),
+        ("Block 3", ["Kettlebell squat", "Single-leg calf raise"]),
+        ("Block 4", ["Cable curl", "Seated tricep extension"]),
     ],
 }
 

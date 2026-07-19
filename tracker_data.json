@@ -941,6 +941,297 @@
           ]
         }
       ]
+    },
+    "GPP S&C 3": {
+      "weeks": [
+        {
+          "n": 1,
+          "date": "2026-07-19"
+        }
+      ],
+      "blocks": [
+        {
+          "label": "Prep",
+          "exercises": [
+            {
+              "name": "3-point lunge",
+              "byweek": [
+                {
+                  "cell": "5\u00d76",
+                  "sets": [
+                    [
+                      5.0,
+                      6
+                    ]
+                  ],
+                  "top": 5.0,
+                  "vol": 30.0,
+                  "nsets": 1
+                }
+              ]
+            },
+            {
+              "name": "Chest-supported W-raise",
+              "byweek": [
+                {
+                  "cell": "5\u00d715",
+                  "sets": [
+                    [
+                      5.0,
+                      15
+                    ]
+                  ],
+                  "top": 5.0,
+                  "vol": 75.0,
+                  "nsets": 1
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "label": "Block 1",
+          "exercises": [
+            {
+              "name": "Trap-bar deadlift",
+              "byweek": [
+                {
+                  "cell": "60\u00d78 \u00b7 70\u00d78 \u00b7 80\u00d78",
+                  "sets": [
+                    [
+                      60.0,
+                      8
+                    ],
+                    [
+                      70.0,
+                      8
+                    ],
+                    [
+                      80.0,
+                      8
+                    ]
+                  ],
+                  "top": 80.0,
+                  "vol": 1680.0,
+                  "nsets": 3
+                }
+              ]
+            },
+            {
+              "name": "Inverted row",
+              "byweek": [
+                {
+                  "cell": "BW\u00d710 \u00b7 BW\u00d710 \u00b7 BW\u00d710",
+                  "sets": [
+                    [
+                      0.0,
+                      10
+                    ],
+                    [
+                      0.0,
+                      10
+                    ],
+                    [
+                      0.0,
+                      10
+                    ]
+                  ],
+                  "top": 0.0,
+                  "vol": 0.0,
+                  "nsets": 3
+                }
+              ]
+            },
+            {
+              "name": "Plank tap",
+              "byweek": [
+                {
+                  "cell": "BW\u00d710 \u00b7 BW\u00d710 \u00b7 BW\u00d710",
+                  "sets": [
+                    [
+                      0.0,
+                      10
+                    ],
+                    [
+                      0.0,
+                      10
+                    ],
+                    [
+                      0.0,
+                      10
+                    ]
+                  ],
+                  "top": 0.0,
+                  "vol": 0.0,
+                  "nsets": 3
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "label": "Block 2",
+          "exercises": [
+            {
+              "name": "RFE split squat",
+              "byweek": [
+                {
+                  "cell": "10\u00d78 \u00b7 12.5\u00d78",
+                  "sets": [
+                    [
+                      10.0,
+                      8
+                    ],
+                    [
+                      12.5,
+                      8
+                    ]
+                  ],
+                  "top": 12.5,
+                  "vol": 180.0,
+                  "nsets": 2
+                }
+              ]
+            },
+            {
+              "name": "Supine dumbbell press",
+              "byweek": [
+                {
+                  "cell": "25\u00d710 \u00b7 25\u00d710",
+                  "sets": [
+                    [
+                      25.0,
+                      10
+                    ],
+                    [
+                      25.0,
+                      10
+                    ]
+                  ],
+                  "top": 25.0,
+                  "vol": 500.0,
+                  "nsets": 2
+                }
+              ]
+            },
+            {
+              "name": "Single-arm cable high-to-low",
+              "byweek": [
+                {
+                  "cell": "12\u00d710 \u00b7 18\u00d710",
+                  "sets": [
+                    [
+                      12.0,
+                      10
+                    ],
+                    [
+                      18.0,
+                      10
+                    ]
+                  ],
+                  "top": 18.0,
+                  "vol": 300.0,
+                  "nsets": 2
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "label": "Block 3",
+          "exercises": [
+            {
+              "name": "Kettlebell squat",
+              "byweek": [
+                {
+                  "cell": "5\u00d710 \u00b7 5\u00d710",
+                  "sets": [
+                    [
+                      5.0,
+                      10
+                    ],
+                    [
+                      5.0,
+                      10
+                    ]
+                  ],
+                  "top": 5.0,
+                  "vol": 100.0,
+                  "nsets": 2
+                }
+              ]
+            },
+            {
+              "name": "Single-leg calf raise",
+              "byweek": [
+                {
+                  "cell": "12.5\u00d78 \u00b7 12.5\u00d710",
+                  "sets": [
+                    [
+                      12.5,
+                      8
+                    ],
+                    [
+                      12.5,
+                      10
+                    ]
+                  ],
+                  "top": 12.5,
+                  "vol": 225.0,
+                  "nsets": 2
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "label": "Block 4",
+          "exercises": [
+            {
+              "name": "Cable curl",
+              "byweek": [
+                {
+                  "cell": "12\u00d712 \u00b7 18\u00d710",
+                  "sets": [
+                    [
+                      12.0,
+                      12
+                    ],
+                    [
+                      18.0,
+                      10
+                    ]
+                  ],
+                  "top": 18.0,
+                  "vol": 324.0,
+                  "nsets": 2
+                }
+              ]
+            },
+            {
+              "name": "Seated tricep extension",
+              "byweek": [
+                {
+                  "cell": "6\u00d712 \u00b7 12\u00d712",
+                  "sets": [
+                    [
+                      6.0,
+                      12
+                    ],
+                    [
+                      12.0,
+                      12
+                    ]
+                  ],
+                  "top": 12.0,
+                  "vol": 216.0,
+                  "nsets": 2
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
   },
   "runs": [
