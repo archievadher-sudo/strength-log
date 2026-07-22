@@ -113,7 +113,10 @@ with open(CSV_PATH, newline="") as f:
                 dur = float(r["Duration"]) if r["Duration"] else 0.0
             except ValueError:
                 dur = 0.0
-            if dist > 0 and dur > 0:
+            # keep dist==0 intervals: RepCount intermittently drops the distance on
+            # one rep of an otherwise uniform interval set (hit on 15 Jul and 22 Jul).
+            # They're backfilled below rather than silently vanishing from the total.
+            if dur > 0:
                 runs_raw[start].append({"name": r["Exercise"].strip(),
                                         "dist_m": dist, "dur_s": dur,
                                         "note": r["Notes"].strip()})
@@ -135,6 +138,28 @@ with open(CSV_PATH, newline="") as f:
         if ex == "1-arm 3-point row" and reps == 80:
             reps = 10
         data[session][date][ex].append((w, reps))
+
+# ---- backfill dropped interval distances --------------------------------
+# RepCount sometimes exports one interval of a uniform set with a blank Distance.
+# When every *recorded* interval in that workout ran the same distance, the blank
+# is that distance too (same duration, same speed note) -- so fill it in rather
+# than under-reporting the session. If the recorded intervals disagree we can't
+# infer it, so the blank is dropped and reported.
+for start, ivs in list(runs_raw.items()):
+    known = {iv["dist_m"] for iv in ivs if iv["dist_m"] > 0}
+    missing = [iv for iv in ivs if iv["dist_m"] <= 0]
+    if not missing:
+        continue
+    if len(known) == 1:
+        fill = known.pop()
+        for iv in missing:
+            iv["dist_m"] = fill
+        print(f"  [backfill] {start[:10]}: {len(missing)} interval(s) missing Distance "
+              f"-> {fill:.0f}m (all recorded intervals ran {fill:.0f}m)")
+    else:
+        runs_raw[start] = [iv for iv in ivs if iv["dist_m"] > 0]
+        print(f"  [WARN] {start[:10]}: {len(missing)} interval(s) missing Distance and "
+              f"recorded distances differ ({sorted(known)}) -- dropped, totals will be low")
 
 # ---- helpers ------------------------------------------------------------
 def fmt_set(w, reps):
