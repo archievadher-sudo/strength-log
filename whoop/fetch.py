@@ -37,7 +37,22 @@ def refresh():
     req = urllib.request.Request(TOKEN_URL, data=data,
                                  headers={"Content-Type": "application/x-www-form-urlencoded",
                                           "User-Agent": UA})
-    r = json.load(urllib.request.urlopen(req))
+    try:
+        r = json.load(urllib.request.urlopen(req))
+    except urllib.error.HTTPError as e:
+        # WHOOP puts the real reason in the body (e.g. invalid_grant). Without
+        # printing it a rejected token just looks like a bare "HTTP Error 400".
+        body = e.read().decode("utf-8", "replace").strip()
+        print(f"token refresh failed: HTTP {e.code} {e.reason}\n  body: {body}")
+        if e.code in (400, 401):
+            print("  -> the stored WHOOP_REFRESH_TOKEN is no longer accepted.\n"
+                  "     Refresh tokens are single-use; if a rotation was ever lost, or the\n"
+                  "     app grant was revoked/expired, it must be re-minted:\n"
+                  "       WHOOP_CLIENT_ID=<id> python3 whoop/mint_token.py url\n"
+                  "       WHOOP_CLIENT_ID=<id> WHOOP_CLIENT_SECRET=<secret> \\\n"
+                  "         python3 whoop/mint_token.py exchange <CODE>\n"
+                  "     then update the WHOOP_REFRESH_TOKEN repo secret.")
+        raise
     # persist the rotated refresh token ASAP
     with open(OUT_TOKEN, "w") as f:
         f.write(r["refresh_token"])
