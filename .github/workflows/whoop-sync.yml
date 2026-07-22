@@ -48,10 +48,17 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}   # fine-grained PAT with Secrets: read+write
         run: |
-          if [ -f new_refresh_token.txt ]; then
+          # -s: only a NON-EMPTY token file is ever written back. Persisting a
+          # blank value silently bricks every later run (400 invalid_request),
+          # and the old step reported success either way.
+          if [ -s new_refresh_token.txt ]; then
             gh secret set WHOOP_REFRESH_TOKEN --body "$(cat new_refresh_token.txt)"
             rm -f new_refresh_token.txt
             echo "refresh token rotated + saved"
+          elif [ -f new_refresh_token.txt ]; then
+            rm -f new_refresh_token.txt
+            echo "::error::rotated token file was EMPTY — refusing to overwrite the secret with a blank value"
+            exit 1
           else
             echo "no new token to save"
           fi

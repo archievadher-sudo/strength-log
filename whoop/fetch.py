@@ -53,9 +53,18 @@ def refresh():
                   "         python3 whoop/mint_token.py exchange <CODE>\n"
                   "     then update the WHOOP_REFRESH_TOKEN repo secret.")
         raise
-    # persist the rotated refresh token ASAP
+    # persist the rotated refresh token ASAP -- but never persist a blank one.
+    # Writing an empty token silently bricks every later run (the next refresh
+    # then sends refresh_token= and WHOOP answers 400 invalid_request), so bail
+    # loudly instead and leave the existing secret untouched.
+    tok = (r.get("refresh_token") or "").strip()
+    if not tok:
+        raise RuntimeError(
+            "WHOOP returned no refresh_token on this refresh -- refusing to write a "
+            "blank token. The existing secret is left as-is; re-mint if the sync stays down."
+        )
     with open(OUT_TOKEN, "w") as f:
-        f.write(r["refresh_token"])
+        f.write(tok)
     return r["access_token"]
 
 
