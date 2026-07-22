@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: write            # to commit docs/whoop_data.json
+  issues: write              # to raise/close the "sync is broken" alert below
 
 concurrency:
   group: whoop-sync          # never run two token-refreshes at once (tokens rotate)
@@ -63,6 +64,41 @@ jobs:
             echo "no new token to save"
           fi
 
+      # The real failure mode here isn't a broken run, it's a broken run nobody
+      # sees: this workflow failed ~70 times straight in Jul 2026 while the
+      # dashboard quietly served 3-day-old data. Raise ONE issue (deduped on
+      # title) so a dead sync reaches an inbox, not just the Actions tab.
+      - name: Raise an alert if the sync is broken
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TITLE: "WHOOP sync is failing"
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          open=$(gh issue list --state open --limit 100 --json number,title \
+                 --jq "map(select(.title==\"$TITLE\")) | .[0].number // empty")
+          if [ -n "$open" ]; then
+            echo "issue #$open already open - not filing another"
+            exit 0
+          fi
+          {
+            echo "The hourly WHOOP sync failed, so \`docs/whoop_data.json\` has stopped"
+            echo "updating and the dashboard is serving stale wellness data."
+            echo
+            echo "Failed run: $RUN_URL"
+            echo
+            echo "Usually the rotating OAuth token. The run log now prints WHOOP's real"
+            echo "error body - read that first:"
+            echo
+            echo "- \`invalid_request\` / \`invalid_grant\` - refresh token is blank or dead."
+            echo "  Re-mint it (whoop/README.md step 2), then update WHOOP_REFRESH_TOKEN."
+            echo "- \`invalid_client\` - WHOOP_CLIENT_SECRET no longer matches the app."
+            echo
+            echo "This issue closes itself on the next successful sync."
+          } > "$RUNNER_TEMP/whoop_alert.md"
+          gh issue create --title "$TITLE" --body-file "$RUNNER_TEMP/whoop_alert.md"
+          echo "alert issue filed"
+
       - name: Commit if changed (squash consecutive syncs)
         if: steps.fetch.outputs.skipped != 'true' && hashFiles('docs/whoop_data.json') != ''
         run: |
@@ -80,3 +116,17 @@ jobs:
             git commit -m "$MSG"
             git push origin main
           fi
+
+      # Self-clearing: an alert that never closes becomes noise you learn to
+      # ignore, so a healthy run resolves any open alert automatically.
+      - name: Clear the alert once syncing again
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TITLE: "WHOOP sync is failing"
+        run: |
+          for n in $(gh issue list --state open --limit 100 --json number,title \
+                     --jq "map(select(.title==\"$TITLE\")) | .[].number"); do
+            gh issue close "$n" --comment "Sync recovered - data is updating again."
+            echo "closed #$n"
+          done

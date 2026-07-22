@@ -387,6 +387,13 @@ svg.mini{width:92px;height:28px;display:block}
 .ivrow.ivhd{background:var(--surface-secondary)}
 .ivrow.ivhd span{font-family:var(--font-ui);font-weight:600;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--content-tertiary)}
 
+/* stale-sync warning — the WHOOP pipe died silently for 3 days in Jul 2026 and
+   was only caught by eye, so a dead sync now announces itself on the page */
+.stalewarn{display:inline-flex;align-items:center;gap:7px;font-family:var(--font-ui);font-weight:700;
+  font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#D9534F;
+  background:rgba(217,83,79,.14);border:1px solid rgba(217,83,79,.38);
+  border-radius:999px;padding:5px 12px;white-space:nowrap}
+
 footer{margin-top:20px;border-top:1px solid var(--border-div);padding:26px 0 8px}
 footer .legend{font-size:13px;line-height:1.7;color:var(--content-tertiary);max-width:760px}
 footer .legend b{color:var(--content-primary)}
@@ -657,7 +664,7 @@ function overviewHTML(){
     + `<div class="tiles">${strengthTiles}</div>`
     + `<div class="section-lab"><span class="eyebrow"><span class="tick"></span>Conditioning</span><h3>Runs ${MID} 2 per week<span class="gd">.</span></h3></div>`
     + `<div class="tiles">${runTiles}</div>`
-    + `<div class="section-lab"><span class="eyebrow"><span class="tick"></span>Wellness</span><h3>Recovery${WHOOP&&WHOOP.synced?` ${MID} synced ${fmtDay(WHOOP.synced)}`:''}<span class="gd">.</span></h3></div>`
+    + `<div class="section-lab"><span class="eyebrow"><span class="tick"></span>Wellness</span><h3>Recovery${whoopSyncSuffix()}<span class="gd">.</span></h3>${whoopStaleChip()}</div>`
     + `<div class="tiles">${whoopTiles()}</div>`
     + footerHTML();
 }
@@ -906,6 +913,30 @@ function whoopGroups(s,gran){
 
 /* zone helpers (WHOOP colour bands) */
 const REDC='#D9534F', REDBG='rgba(217,83,79,.14)';
+/* --- stale-sync guard ---------------------------------------------------
+   The hourly WHOOP Action wrote a blank refresh token on 19 Jul 2026 and then
+   failed ~70 runs straight; the page kept quietly showing "synced 19 Jul" and
+   the outage was only spotted by eye 3 days later. Anything older than a day
+   and a half now says so loudly instead of reading as normal. */
+const STALE_HOURS=36;
+function whoopStaleHours(){
+  if(!WHOOP||!WHOOP.synced) return null;
+  const s=new Date(WHOOP.synced+'T12:00:00');
+  if(isNaN(s)) return null;
+  return (Date.now()-s.getTime())/3600000;
+}
+function whoopIsStale(){const h=whoopStaleHours();return h!=null&&h>STALE_HOURS;}
+/* suffix inside the section heading (fresh only) + a red chip beside it (stale) */
+function whoopSyncSuffix(){
+  return (WHOOP&&WHOOP.synced&&!whoopIsStale())? ` ${MID} synced ${fmtDay(WHOOP.synced)}` : '';
+}
+function whoopStaleChip(){
+  if(!whoopIsStale()) return '';
+  const days=Math.floor(whoopStaleHours()/24);
+  return `<span class="stalewarn" title="The WHOOP sync Action has not updated the data. Check the workflow runs.">`
+    +`\u26a0 Sync stale ${MID} last ${fmtDay(WHOOP.synced)}`
+    +(days>=1?` (${days} day${days===1?'':'s'})`:'')+`</span>`;
+}
 function recZone(v){ if(v>=67)return{c:'var(--pos)',bg:'var(--pos-soft)',lab:'Green '+MID+' recovered'};
   if(v>=34)return{c:'var(--gold-deep)',bg:'var(--gold-pale)',lab:'Yellow '+MID+' adequate'};
   return{c:REDC,bg:REDBG,lab:'Red '+MID+' take it easy'};}
