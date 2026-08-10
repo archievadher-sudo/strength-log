@@ -461,7 +461,9 @@ function sessionStats(name){
     if(bs&&bs.w>0&&(!top||bs.w>top.w))top={w:bs.w,r:bs.r,name:e.name};}
   return{times:s.weeks.length,prs,sets,ex,top,weeks:s.weeks,last:s.weeks[s.weeks.length-1].date};
 }
-function mondayISO(iso){const d=new Date(iso+'T00:00:00');const off=(d.getDay()+6)%7;d.setDate(d.getDate()-off);return d.toISOString().slice(0,10);}
+function mondayISO(iso){const d=new Date(iso+'T00:00:00');const off=(d.getDay()+6)%7;d.setDate(d.getDate()-off);
+  // format in LOCAL time \u2014 toISOString() converts to UTC and can shift the date back a day (TZ ahead of UTC)
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function fmtDay(iso){const d=new Date(iso+'T00:00:00');return d.getDate()+' '+MON[d.getMonth()];}
 function weekLabel(monIso){const m=new Date(monIso+'T00:00:00');const s=new Date(m);s.setDate(m.getDate()+6);
   return m.getMonth()===s.getMonth()? `${m.getDate()}${NDASH}${s.getDate()} ${MON[s.getMonth()]}` : `${m.getDate()} ${MON[m.getMonth()]} ${NDASH} ${s.getDate()} ${MON[s.getMonth()]}`;}
@@ -625,10 +627,14 @@ function overviewHTML(){
         <div class="tile-meta">Last trained ${fmtDay(st.last)} ${MID} ${st.times} time${st.times>1?'s':''} total</div>
         <div class="tile-foot"><span class="tile-go" data-open="${name}" style="cursor:pointer">View progress ${CHEV}</span></div></div>`;
     }
-    const occHere = state.scope==='all' ? null : OCC.find(o=>o.name===name&&o.wk===state.scope);
+    // a session can occur more than once in one Mon-Sun week; show the latest, and note the count
+    const occWk = state.scope==='all' ? [] : OCC.filter(o=>o.name===name&&o.wk===state.scope);
+    const occHere = occWk.length ? occWk[occWk.length-1] : null;
     const doneLine = state.scope==='all'
       ? `${st.times} session${st.times>1?'s':''} ${MID} last ${fmtDay(st.last)}`
-      : `Done ${fmtDay(occHere.date)} ${MID} week ${occHere.n}`;
+      : (occWk.length>1
+          ? `${occWk.length} sessions ${MID} last ${fmtDay(occHere.date)} (week ${occHere.n})`
+          : `Done ${fmtDay(occHere.date)} ${MID} week ${occHere.n}`);
     const prpill = st.prs>0? `<span class="prpill">${ARWU} ${st.prs} PR${st.prs>1?'s':''}</span>` : `<span class="tile-go" style="color:var(--content-tertiary)">${st.ex} exercises</span>`;
     const top = st.top? `<span class="big nums">${fmtW(st.top.w)}kg <small>${st.top.name}</small></span>` : '<span></span>';
     return `<div class="glass tile done" data-open="${name}" data-tilt>
