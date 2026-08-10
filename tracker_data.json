@@ -2758,6 +2758,42 @@
       "total_dur_s": 1964.0,
       "avg_kmph": 11.0,
       "pace_s_per_km": 327
+    },
+    {
+      "type": "sprint",
+      "date": "2026-08-03",
+      "name": "Running sprint",
+      "intervals": [
+        {
+          "dist_m": 800.0,
+          "dur_s": 213.0,
+          "kmph": 13.5
+        },
+        {
+          "dist_m": 800.0,
+          "dur_s": 213.0,
+          "kmph": 13.5
+        },
+        {
+          "dist_m": 800.0,
+          "dur_s": 213.0,
+          "kmph": 13.5
+        },
+        {
+          "dist_m": 800.0,
+          "dur_s": 213.0,
+          "kmph": 13.5
+        },
+        {
+          "dist_m": 800.0,
+          "dur_s": 213.0,
+          "kmph": 13.5
+        }
+      ],
+      "total_dist_m": 4000.0,
+      "total_dur_s": 1065.0,
+      "avg_kmph": 13.5,
+      "pace_s_per_km": 266
     }
   ]
 }
