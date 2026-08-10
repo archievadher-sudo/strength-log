@@ -1,11 +1,14 @@
 name: WHOOP sync
 
-# Pulls WHOOP data daily and commits docs/whoop_data.json (Pages redeploys).
+# Pulls WHOOP data every 4h and commits docs/whoop_data.json (Pages redeploys).
 # Also persists the rotated refresh token back into the WHOOP_REFRESH_TOKEN secret.
 
 on:
   schedule:
-    - cron: "20 * * * *"     # hourly at :20 — intraday strain updates; recovery/sleep finalise after morning sync
+    # every 4h at :20 (6 runs/day). WHOOP refresh tokens are single-use and
+    # rotate each run, and a single lost rotation breaks the chain — fewer runs
+    # = far fewer chances to lose one. Still fresh enough for intraday strain.
+    - cron: "20 */4 * * *"
   workflow_dispatch: {}      # manual "Run workflow" button
 
 permissions:
@@ -49,20 +52,37 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}   # fine-grained PAT with Secrets: read+write
         run: |
+          if [ ! -f new_refresh_token.txt ]; then echo "no new token to save"; exit 0; fi
           # -s: only a NON-EMPTY token file is ever written back. Persisting a
           # blank value silently bricks every later run (400 invalid_request),
           # and the old step reported success either way.
-          if [ -s new_refresh_token.txt ]; then
-            gh secret set WHOOP_REFRESH_TOKEN --body "$(cat new_refresh_token.txt)"
-            rm -f new_refresh_token.txt
-            echo "refresh token rotated + saved"
-          elif [ -f new_refresh_token.txt ]; then
+          if [ ! -s new_refresh_token.txt ]; then
             rm -f new_refresh_token.txt
             echo "::error::rotated token file was EMPTY — refusing to overwrite the secret with a blank value"
             exit 1
-          else
-            echo "no new token to save"
           fi
+          # The fetch step already CONSUMED the old token to mint this one, so
+          # losing it here permanently breaks the chain (what happened Jul->Aug
+          # 2026). A single transient `gh secret set` blip must not be fatal —
+          # retry hard with backoff before giving up.
+          REPO="${{ github.repository }}"
+          saved=0
+          for i in 1 2 3 4 5; do
+            if gh secret set WHOOP_REFRESH_TOKEN --body "$(cat new_refresh_token.txt)"; then
+              saved=1; echo "refresh token rotated + saved (attempt $i)"; break
+            fi
+            echo "save attempt $i failed; retrying in $((i*10))s"; sleep $((i*10))
+          done
+          if [ "$saved" != 1 ]; then
+            echo "::error::CRITICAL — could not persist the rotated WHOOP token after 5 attempts."
+            echo "::error::The old token is already burned; re-mint (whoop/README.md) and update WHOOP_REFRESH_TOKEN."
+            rm -f new_refresh_token.txt
+            exit 1
+          fi
+          # Confirm the write actually landed (guards a 0-exit that didn't persist)
+          upd=$(gh api "repos/$REPO/actions/secrets/WHOOP_REFRESH_TOKEN" --jq .updated_at 2>/dev/null || echo "")
+          echo "confirmed WHOOP_REFRESH_TOKEN updated_at=${upd:-unknown}"
+          rm -f new_refresh_token.txt
 
       # The real failure mode here isn't a broken run, it's a broken run nobody
       # sees: this workflow failed ~70 times straight in Jul 2026 while the
