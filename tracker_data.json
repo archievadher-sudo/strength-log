@@ -2800,6 +2800,336 @@
           ]
         }
       ]
+    },
+    "Knees and Pull": {
+      "weeks": [
+        {
+          "n": 1,
+          "date": "2026-08-17"
+        }
+      ],
+      "blocks": [
+        {
+          "label": "Prep",
+          "exercises": [
+            {
+              "name": "FFE split squat",
+              "byweek": [
+                {
+                  "cell": "5\u00d712",
+                  "sets": [
+                    [
+                      5.0,
+                      12
+                    ]
+                  ],
+                  "top": 5.0,
+                  "vol": 60.0,
+                  "nsets": 1
+                }
+              ]
+            },
+            {
+              "name": "Banded knee extension",
+              "byweek": [
+                {
+                  "cell": "BW\u00d712",
+                  "sets": [
+                    [
+                      0.0,
+                      12
+                    ]
+                  ],
+                  "top": 0.0,
+                  "vol": 0.0,
+                  "nsets": 1
+                }
+              ]
+            },
+            {
+              "name": "Chest-supported W-raise",
+              "byweek": [
+                {
+                  "cell": "5\u00d715",
+                  "sets": [
+                    [
+                      5.0,
+                      15
+                    ]
+                  ],
+                  "top": 5.0,
+                  "vol": 75.0,
+                  "nsets": 1
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "label": "Block 1",
+          "exercises": [
+            {
+              "name": "Squat",
+              "byweek": [
+                {
+                  "cell": "60\u00d78 \u00b7 65\u00d78 \u00b7 68\u00d78",
+                  "sets": [
+                    [
+                      60.0,
+                      8
+                    ],
+                    [
+                      65.0,
+                      8
+                    ],
+                    [
+                      68.0,
+                      8
+                    ]
+                  ],
+                  "top": 68.0,
+                  "vol": 1544.0,
+                  "nsets": 3
+                }
+              ]
+            },
+            {
+              "name": "Dumbbell row",
+              "byweek": [
+                {
+                  "cell": "15\u00d710 \u00b7 17.5\u00d710 \u00b7 17.5\u00d710",
+                  "sets": [
+                    [
+                      15.0,
+                      10
+                    ],
+                    [
+                      17.5,
+                      10
+                    ],
+                    [
+                      17.5,
+                      10
+                    ]
+                  ],
+                  "top": 17.5,
+                  "vol": 500.0,
+                  "nsets": 3
+                }
+              ]
+            },
+            {
+              "name": "Face pulls",
+              "byweek": [
+                {
+                  "cell": "12\u00d712 \u00b7 18\u00d712 \u00b7 24\u00d712",
+                  "sets": [
+                    [
+                      12.0,
+                      12
+                    ],
+                    [
+                      18.0,
+                      12
+                    ],
+                    [
+                      24.0,
+                      12
+                    ]
+                  ],
+                  "top": 24.0,
+                  "vol": 648.0,
+                  "nsets": 3
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "label": "Block 2",
+          "exercises": [
+            {
+              "name": "Split squat",
+              "byweek": [
+                {
+                  "cell": "17.5\u00d710 \u00b7 20\u00d79",
+                  "sets": [
+                    [
+                      17.5,
+                      10
+                    ],
+                    [
+                      20.0,
+                      9
+                    ]
+                  ],
+                  "top": 20.0,
+                  "vol": 355.0,
+                  "nsets": 2
+                }
+              ]
+            },
+            {
+              "name": "Frontal plane cossack squat",
+              "byweek": [
+                {
+                  "cell": "10\u00d710 \u00b7 12.5\u00d710",
+                  "sets": [
+                    [
+                      10.0,
+                      10
+                    ],
+                    [
+                      12.5,
+                      10
+                    ]
+                  ],
+                  "top": 12.5,
+                  "vol": 225.0,
+                  "nsets": 2
+                }
+              ]
+            },
+            {
+              "name": "1-arm 3-point row",
+              "byweek": [
+                {
+                  "cell": "20\u00d710 \u00b7 22.5\u00d78",
+                  "sets": [
+                    [
+                      20.0,
+                      10
+                    ],
+                    [
+                      22.5,
+                      8
+                    ]
+                  ],
+                  "top": 22.5,
+                  "vol": 380.0,
+                  "nsets": 2
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "label": "Block 3",
+          "exercises": [
+            {
+              "name": "Wall sit",
+              "byweek": [
+                {
+                  "cell": "BW\u00d730 \u00b7 BW\u00d730",
+                  "sets": [
+                    [
+                      0.0,
+                      30
+                    ],
+                    [
+                      0.0,
+                      30
+                    ]
+                  ],
+                  "top": 0.0,
+                  "vol": 0.0,
+                  "nsets": 2
+                }
+              ],
+              "timed": true
+            },
+            {
+              "name": "Single-leg calf raise",
+              "byweek": [
+                {
+                  "cell": "15\u00d78 \u00b7 15\u00d77",
+                  "sets": [
+                    [
+                      15.0,
+                      8
+                    ],
+                    [
+                      15.0,
+                      7
+                    ]
+                  ],
+                  "top": 15.0,
+                  "vol": 225.0,
+                  "nsets": 2
+                }
+              ]
+            },
+            {
+              "name": "Single-arm cable row with reach",
+              "byweek": [
+                {
+                  "cell": "12\u00d710 \u00b7 18\u00d710",
+                  "sets": [
+                    [
+                      12.0,
+                      10
+                    ],
+                    [
+                      18.0,
+                      10
+                    ]
+                  ],
+                  "top": 18.0,
+                  "vol": 300.0,
+                  "nsets": 2
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "label": "Block 4",
+          "exercises": [
+            {
+              "name": "Seated dumbbell curl",
+              "byweek": [
+                {
+                  "cell": "12\u00d712 \u00b7 12\u00d79",
+                  "sets": [
+                    [
+                      12.0,
+                      12
+                    ],
+                    [
+                      12.0,
+                      9
+                    ]
+                  ],
+                  "top": 12.0,
+                  "vol": 252.0,
+                  "nsets": 2
+                }
+              ]
+            },
+            {
+              "name": "Tricep pushdown (rope)",
+              "byweek": [
+                {
+                  "cell": "36\u00d712 \u00b7 40\u00d710",
+                  "sets": [
+                    [
+                      36.0,
+                      12
+                    ],
+                    [
+                      40.0,
+                      10
+                    ]
+                  ],
+                  "top": 40.0,
+                  "vol": 832.0,
+                  "nsets": 2
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
   },
   "runs": [
@@ -2994,6 +3324,42 @@
       "total_dur_s": 1065.0,
       "avg_kmph": 13.5,
       "pace_s_per_km": 266
+    },
+    {
+      "type": "sprint",
+      "date": "2026-08-12",
+      "name": "Running sprint",
+      "intervals": [
+        {
+          "dist_m": 800.0,
+          "dur_s": 206.0,
+          "kmph": 14.0
+        },
+        {
+          "dist_m": 800.0,
+          "dur_s": 206.0,
+          "kmph": 14.0
+        },
+        {
+          "dist_m": 800.0,
+          "dur_s": 206.0,
+          "kmph": 14.0
+        },
+        {
+          "dist_m": 800.0,
+          "dur_s": 206.0,
+          "kmph": 14.0
+        },
+        {
+          "dist_m": 800.0,
+          "dur_s": 206.0,
+          "kmph": 14.0
+        }
+      ],
+      "total_dist_m": 4000.0,
+      "total_dur_s": 1030.0,
+      "avg_kmph": 14.0,
+      "pace_s_per_km": 258
     }
   ]
 }

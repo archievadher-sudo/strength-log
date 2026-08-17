@@ -59,6 +59,15 @@ CANON = {
     "single leg calf raises": "Single-leg calf raise",
     "cable curl": "Cable curl",
     "seated tricep extension": "Seated tricep extension",
+    # Phase 2 — Knees and Pull
+    "banded knee extension": "Banded knee extension",
+    "squat": "Squat",
+    "dumbbell row": "Dumbbell row",
+    "face pulls": "Face pulls",
+    "frontal plane cossack squat": "Frontal plane cossack squat",
+    "wall sit": "Wall sit",
+    "single arm cable row with reach": "Single-arm cable row with reach",
+    "seated dumbbell curls": "Seated dumbbell curl",
 }
 
 # ---- programme definition: superset blocks per session ------------------
@@ -84,18 +93,29 @@ PROGRAMME = {
         ("Block 3", ["Kettlebell squat", "Single-leg calf raise"]),
         ("Block 4", ["Cable curl", "Seated tricep extension"]),
     ],
+    # Phase 2 (from 17 Aug 2026). Blocks inferred from set-count pattern +
+    # logging order (RepCount loses superset structure) -- PT to confirm.
+    "Knees and Pull": [
+        ("Prep",  ["FFE split squat", "Banded knee extension", "Chest-supported W-raise"]),
+        ("Block 1", ["Squat", "Dumbbell row", "Face pulls"]),
+        ("Block 2", ["Split squat", "Frontal plane cossack squat", "1-arm 3-point row"]),
+        ("Block 3", ["Wall sit", "Single-leg calf raise", "Single-arm cable row with reach"]),
+        ("Block 4", ["Seated dumbbell curl", "Tricep pushdown (rope)"]),
+    ],
 }
 
 # which CSV "Name" maps to which session key
 SESSION_MAP = {
     "gpp s&c": "GPP S&C 1",
     "gpp s&c2": "GPP S&C 2",
-    "gpp s&c 3": "GPP S&C 3",  # future
+    "gpp s&c 3": "GPP S&C 3",
+    "knees and pull": "Knees and Pull",
 }
 
 # ---- parse CSV ----------------------------------------------------------
 # structure: data[session][date][canon_exercise] = [(w,reps), ...]
 data = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
+timed_ex = set()  # exercises logged as timed holds (Duration only) -- "reps" = seconds
 runs_raw = defaultdict(list)  # keyed by Workout Start -> list of cardio intervals
 with open(CSV_PATH, newline="") as f:
     for r in csv.DictReader(f):
@@ -137,6 +157,14 @@ with open(CSV_PATH, newline="") as f:
         # fix the obvious "12.5 x 80" typo on 1-arm 3-point row -> 10 reps
         if ex == "1-arm 3-point row" and reps == 80:
             reps = 10
+        # timed hold (e.g. Wall sit): logged with Duration only -- seconds become
+        # the rep count and the exercise is flagged so the dashboard shows "Ns"
+        if reps == 0 and not r["Weight"] and r["Duration"]:
+            try:
+                reps = int(float(r["Duration"]))
+                timed_ex.add(ex)
+            except ValueError:
+                pass
         data[session][date][ex].append((w, reps))
 
 # ---- backfill dropped interval distances --------------------------------
@@ -186,6 +214,8 @@ for session, blocks in PROGRAMME.items():
         block = {"label": label, "exercises": []}
         for ex in exercises:
             row = {"name": ex, "byweek": []}
+            if ex in timed_ex:
+                row["timed"] = True
             for d in dates:
                 sets = data[session][d].get(ex, [])
                 row["byweek"].append({
