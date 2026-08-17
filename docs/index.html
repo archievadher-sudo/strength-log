@@ -205,6 +205,12 @@ main{padding:28px 0 72px}
 .block.collapsed .block-chev{transform:rotate(0deg)}
 .block-body{overflow:hidden;max-height:1600px;transition:max-height .34s var(--ease),opacity .24s var(--ease)}
 .block.collapsed .block-body{max-height:0;opacity:0}
+/* phase groups on the overview: reuse block collapse outside the glass table */
+.phases .block{border-bottom:none}
+.phases .block-head{padding:10px 6px;border-radius:14px}
+.phases .block-body{max-height:2400px}
+.phases .block-body .tiles{padding:8px 0 18px}
+.phases .block.collapsed+.block{margin-top:2px}
 
 .ex-table{--exg:minmax(150px,1fr) 132px 132px 84px 90px 22px}
 .ex-table.single{--exg:minmax(150px,1.3fr) 96px 60px 86px 92px 22px}
@@ -468,7 +474,11 @@ function fmtDay(iso){const d=new Date(iso+'T00:00:00');return d.getDate()+' '+MO
 function weekLabel(monIso){const m=new Date(monIso+'T00:00:00');const s=new Date(m);s.setDate(m.getDate()+6);
   return m.getMonth()===s.getMonth()? `${m.getDate()}${NDASH}${s.getDate()} ${MON[s.getMonth()]}` : `${m.getDate()} ${MON[m.getMonth()]} ${NDASH} ${s.getDate()} ${MON[s.getMonth()]}`;}
 
-const CATALOG=['GPP S&C 1','GPP S&C 2','GPP S&C 3','Knees and Pull'];
+const PHASES=[
+  {key:'p2open', label:'Phase 2', names:['Knees and Pull'], current:true},
+  {key:'p1open', label:'Phase 1', names:['GPP S&C 1','GPP S&C 2','GPP S&C 3'], current:false},
+];
+const CATALOG=PHASES.flatMap(p=>p.names);
 /* occurrences */
 const OCC=[];
 for(const[name,s]of Object.entries(DATA.sessions))s.weeks.forEach((w,i)=>OCC.push({name,i,date:w.date,n:w.n,vol:weekVol(s,i),wk:mondayISO(w.date)}));
@@ -499,7 +509,7 @@ const RUN_SESS={};
 RUNS.forEach(r=>{(RUN_SESS[r.type]||(RUN_SESS[r.type]={type:r.type,runs:[]})).runs.push(r);});
 Object.values(RUN_SESS).forEach(rs=>rs.runs.sort((a,b)=>a.date<b.date?-1:1));
 const RUN_LABEL={sprint:'Sprint session',long:'Long / slow run'};
-const state={scope:'all',session:null,whoop:null,whoopGran:'daily',whoopWkA:null,whoopWkB:null};
+const state={scope:'all',session:null,whoop:null,whoopGran:'daily',whoopWkA:null,whoopWkB:null,p2open:true,p1open:false};
 const app=document.getElementById('app');
 
 /* ---------- sparkline (mini) ---------- */
@@ -613,7 +623,7 @@ function overviewHTML(){
     return `<button class="${state.scope===k?'on':''}" data-scope="${k}">${lab}</button>`;
   }).join('');
 
-  const strengthTiles=CATALOG.map(name=>{
+  const tileFor=name=>{
     const s=DATA.sessions[name];
     const inScope = state.scope==='all' ? !!s : OCC.some(o=>o.name===name&&o.wk===state.scope);
     if(!s){
@@ -643,6 +653,22 @@ function overviewHTML(){
       <div class="tile-foot">${top}<span class="tile-go">Progress ${CHEV}</span></div>
       <div style="margin-top:12px">${prpill}</div>
     </div>`;
+  };
+
+  // phase groups: current phase open, finished phases collapsed (state-persisted)
+  const phaseGroups=PHASES.map(p=>{
+    const occ=OCC.filter(o=>p.names.includes(o.name));
+    const sub = p.current
+      ? `current${occ.length?` ${MID} since ${fmtDay(occ[0].date)}`:''}`
+      : (occ.length?`${fmtDay(occ[0].date)} ${NDASH} ${fmtDay(occ[occ.length-1].date)} ${MID} ${occ.length} session${occ.length===1?'':'s'}`:'');
+    const open=!!state[p.key];
+    return `<div class="block${open?'':' collapsed'}">
+      <button class="block-head" data-blocktoggle data-phasetoggle="${p.key}" aria-expanded="${open}">
+        <span class="block-lab"><span class="tick"></span>${p.label}<span class="ss">${sub}</span></span>
+        <span class="block-chev">${CHEV}</span>
+      </button>
+      <div class="block-body"><div class="tiles">${p.names.map(tileFor).join('')}</div></div>
+    </div>`;
   }).join('');
 
   const runTiles=RUN_TYPES.map(rt=>{
@@ -667,7 +693,7 @@ function overviewHTML(){
   return heroHTML()
     + `<div class="filter"><span class="lab">Filter</span><div class="seg" id="seg">${segs}</div></div>`
     + `<div class="section-lab"><span class="eyebrow"><span class="tick"></span>Strength</span><h3>${state.scope==='all'?'All sessions':'Sessions this week'}<span class="gd">.</span></h3></div>`
-    + `<div class="tiles">${strengthTiles}</div>`
+    + `<div class="phases">${phaseGroups}</div>`
     + `<div class="section-lab"><span class="eyebrow"><span class="tick"></span>Conditioning</span><h3>Runs ${MID} 2 per week<span class="gd">.</span></h3></div>`
     + `<div class="tiles">${runTiles}</div>`
     + `<div class="section-lab"><span class="eyebrow"><span class="tick"></span>Wellness</span><h3>Recovery${whoopSyncSuffix()}<span class="gd">.</span></h3>${whoopStaleChip()}</div>`
@@ -1332,7 +1358,8 @@ app.addEventListener('click',e=>{const t=e.target.closest('[data-runtoggle]');if
 app.addEventListener('keydown',e=>{const t=e.target.closest('[data-runtoggle]');if(t&&(e.key==='Enter'||e.key===' ')){e.preventDefault();openRunChart(t.dataset.runtoggle);}});
 app.addEventListener('click',e=>{const t=e.target.closest('[data-toggle]');if(t)openChart(t.dataset.toggle);});
 app.addEventListener('keydown',e=>{const t=e.target.closest('[data-toggle]');if(t&&(e.key==='Enter'||e.key===' ')){e.preventDefault();openChart(t.dataset.toggle);}});
-app.addEventListener('click',e=>{const b=e.target.closest('[data-blocktoggle]');if(!b)return;const blk=b.closest('.block');blk.classList.toggle('collapsed');b.setAttribute('aria-expanded',String(!blk.classList.contains('collapsed')));});
+app.addEventListener('click',e=>{const b=e.target.closest('[data-blocktoggle]');if(!b)return;const blk=b.closest('.block');blk.classList.toggle('collapsed');b.setAttribute('aria-expanded',String(!blk.classList.contains('collapsed')));
+  if(b.dataset.phasetoggle)state[b.dataset.phasetoggle]=!blk.classList.contains('collapsed');});
 /* 3D tilt on session tiles */
 function initTilt(){
   if(!matchMedia('(hover:hover) and (pointer:fine)').matches||matchMedia('(prefers-reduced-motion:reduce)').matches)return;
