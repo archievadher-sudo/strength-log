@@ -12,7 +12,7 @@ from datetime import datetime
 
 # CSV path can be passed as arg 1 (RepCount export filenames change per export)
 CSV_PATH = sys.argv[1] if len(sys.argv) > 1 else "/Users/fmy-235/Downloads/export_15 Jul 2026 (1).csv"
-OUT_DIR = "/Users/fmy-235/Desktop/Training-Tracker"
+OUT_DIR = sys.argv[2] if len(sys.argv) > 2 else "/Users/fmy-235/Desktop/Training-Tracker"
 START = "2026-06-28"
 
 # ---- name normalisation -------------------------------------------------
@@ -68,6 +68,15 @@ CANON = {
     "wall sit": "Wall sit",
     "single arm cable row with reach": "Single-arm cable row with reach",
     "seated dumbbell curls": "Seated dumbbell curl",
+    # Phase 2 — Hinge and Push
+    "serratus push up": "Serratus push-up",
+    "rdl smyth machine": "RDL (Smith machine)",
+    "alternate arm z press": "Alternate-arm Z press",
+    "dumbbell lateral raises": "Dumbbell lateral raise",
+    "reverse dumbbel fly head supported": "Reverse dumbbell fly (head-supported)",
+    "single leg hip thrust": "Single-leg hip thrust",
+    "seated calf raises": "Seated calf raise",
+    "front raise dumbbell": "Dumbbell front raise",
 }
 
 # ---- programme definition: superset blocks per session ------------------
@@ -102,6 +111,16 @@ PROGRAMME = {
         ("Block 3", ["Wall sit", "Single-leg calf raise", "Single-arm cable row with reach"]),
         ("Block 4", ["Seated dumbbell curl", "Tricep pushdown (rope)"]),
     ],
+    # Phase 2 (from 19 Aug 2026). Same block architecture as Knees and Pull
+    # (prep x3, then 3x3 / 3x2 / 3x2 / 2x2) -- blocks inferred from the set-count
+    # pattern + logging order, which partitions the 28 logged sets cleanly. PT to confirm.
+    "Hinge and Push": [
+        ("Prep",  ["Single-leg hip raise", "Serratus push-up", "Cable cross-back"]),
+        ("Block 1", ["RDL (Smith machine)", "Alternate-arm Z press", "Dumbbell lateral raise"]),
+        ("Block 2", ["B-stance RDL", "Arnold press", "Reverse dumbbell fly (head-supported)"]),
+        ("Block 3", ["Single-leg hip thrust", "Seated calf raise", "Dumbbell front raise"]),
+        ("Block 4", ["Seated DB curl-to-press", "Lying tricep extension"]),
+    ],
 }
 
 # which CSV "Name" maps to which session key
@@ -110,6 +129,7 @@ SESSION_MAP = {
     "gpp s&c2": "GPP S&C 2",
     "gpp s&c 3": "GPP S&C 3",
     "knees and pull": "Knees and Pull",
+    "hinge and push": "Hinge and Push",
 }
 
 # ---- parse CSV ----------------------------------------------------------

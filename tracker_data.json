@@ -3130,6 +3130,335 @@
           ]
         }
       ]
+    },
+    "Hinge and Push": {
+      "weeks": [
+        {
+          "n": 1,
+          "date": "2026-08-19"
+        }
+      ],
+      "blocks": [
+        {
+          "label": "Prep",
+          "exercises": [
+            {
+              "name": "Single-leg hip raise",
+              "byweek": [
+                {
+                  "cell": "BW\u00d710",
+                  "sets": [
+                    [
+                      0.0,
+                      10
+                    ]
+                  ],
+                  "top": 0.0,
+                  "vol": 0.0,
+                  "nsets": 1
+                }
+              ]
+            },
+            {
+              "name": "Serratus push-up",
+              "byweek": [
+                {
+                  "cell": "BW\u00d715",
+                  "sets": [
+                    [
+                      0.0,
+                      15
+                    ]
+                  ],
+                  "top": 0.0,
+                  "vol": 0.0,
+                  "nsets": 1
+                }
+              ]
+            },
+            {
+              "name": "Cable cross-back",
+              "byweek": [
+                {
+                  "cell": "6\u00d715",
+                  "sets": [
+                    [
+                      6.0,
+                      15
+                    ]
+                  ],
+                  "top": 6.0,
+                  "vol": 90.0,
+                  "nsets": 1
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "label": "Block 1",
+          "exercises": [
+            {
+              "name": "RDL (Smith machine)",
+              "byweek": [
+                {
+                  "cell": "70\u00d78 \u00b7 90\u00d78 \u00b7 100\u00d77",
+                  "sets": [
+                    [
+                      70.0,
+                      8
+                    ],
+                    [
+                      90.0,
+                      8
+                    ],
+                    [
+                      100.0,
+                      7
+                    ]
+                  ],
+                  "top": 100.0,
+                  "vol": 1980.0,
+                  "nsets": 3
+                }
+              ]
+            },
+            {
+              "name": "Alternate-arm Z press",
+              "byweek": [
+                {
+                  "cell": "10\u00d78 \u00b7 12.5\u00d78 \u00b7 12.5\u00d77",
+                  "sets": [
+                    [
+                      10.0,
+                      8
+                    ],
+                    [
+                      12.5,
+                      8
+                    ],
+                    [
+                      12.5,
+                      7
+                    ]
+                  ],
+                  "top": 12.5,
+                  "vol": 267.5,
+                  "nsets": 3
+                }
+              ]
+            },
+            {
+              "name": "Dumbbell lateral raise",
+              "byweek": [
+                {
+                  "cell": "7.5\u00d710 \u00b7 7.5\u00d710 \u00b7 7.5\u00d79",
+                  "sets": [
+                    [
+                      7.5,
+                      10
+                    ],
+                    [
+                      7.5,
+                      10
+                    ],
+                    [
+                      7.5,
+                      9
+                    ]
+                  ],
+                  "top": 7.5,
+                  "vol": 217.5,
+                  "nsets": 3
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "label": "Block 2",
+          "exercises": [
+            {
+              "name": "B-stance RDL",
+              "byweek": [
+                {
+                  "cell": "22.5\u00d79 \u00b7 22.5\u00d710",
+                  "sets": [
+                    [
+                      22.5,
+                      9
+                    ],
+                    [
+                      22.5,
+                      10
+                    ]
+                  ],
+                  "top": 22.5,
+                  "vol": 427.5,
+                  "nsets": 2
+                }
+              ]
+            },
+            {
+              "name": "Arnold press",
+              "byweek": [
+                {
+                  "cell": "17.5\u00d78 \u00b7 17.5\u00d78",
+                  "sets": [
+                    [
+                      17.5,
+                      8
+                    ],
+                    [
+                      17.5,
+                      8
+                    ]
+                  ],
+                  "top": 17.5,
+                  "vol": 280.0,
+                  "nsets": 2
+                }
+              ]
+            },
+            {
+              "name": "Reverse dumbbell fly (head-supported)",
+              "byweek": [
+                {
+                  "cell": "5\u00d712 \u00b7 5\u00d712",
+                  "sets": [
+                    [
+                      5.0,
+                      12
+                    ],
+                    [
+                      5.0,
+                      12
+                    ]
+                  ],
+                  "top": 5.0,
+                  "vol": 120.0,
+                  "nsets": 2
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "label": "Block 3",
+          "exercises": [
+            {
+              "name": "Single-leg hip thrust",
+              "byweek": [
+                {
+                  "cell": "10\u00d710 \u00b7 12.5\u00d710",
+                  "sets": [
+                    [
+                      10.0,
+                      10
+                    ],
+                    [
+                      12.5,
+                      10
+                    ]
+                  ],
+                  "top": 12.5,
+                  "vol": 225.0,
+                  "nsets": 2
+                }
+              ]
+            },
+            {
+              "name": "Seated calf raise",
+              "byweek": [
+                {
+                  "cell": "20\u00d712 \u00b7 30\u00d712",
+                  "sets": [
+                    [
+                      20.0,
+                      12
+                    ],
+                    [
+                      30.0,
+                      12
+                    ]
+                  ],
+                  "top": 30.0,
+                  "vol": 600.0,
+                  "nsets": 2
+                }
+              ]
+            },
+            {
+              "name": "Dumbbell front raise",
+              "byweek": [
+                {
+                  "cell": "7.5\u00d710 \u00b7 7.5\u00d710",
+                  "sets": [
+                    [
+                      7.5,
+                      10
+                    ],
+                    [
+                      7.5,
+                      10
+                    ]
+                  ],
+                  "top": 7.5,
+                  "vol": 150.0,
+                  "nsets": 2
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "label": "Block 4",
+          "exercises": [
+            {
+              "name": "Seated DB curl-to-press",
+              "byweek": [
+                {
+                  "cell": "10\u00d712 \u00b7 10\u00d712",
+                  "sets": [
+                    [
+                      10.0,
+                      12
+                    ],
+                    [
+                      10.0,
+                      12
+                    ]
+                  ],
+                  "top": 10.0,
+                  "vol": 240.0,
+                  "nsets": 2
+                }
+              ]
+            },
+            {
+              "name": "Lying tricep extension",
+              "byweek": [
+                {
+                  "cell": "15\u00d712 \u00b7 15\u00d710",
+                  "sets": [
+                    [
+                      15.0,
+                      12
+                    ],
+                    [
+                      15.0,
+                      10
+                    ]
+                  ],
+                  "top": 15.0,
+                  "vol": 330.0,
+                  "nsets": 2
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
   },
   "runs": [
@@ -3360,6 +3689,42 @@
       "total_dur_s": 1030.0,
       "avg_kmph": 14.0,
       "pace_s_per_km": 258
+    },
+    {
+      "type": "sprint",
+      "date": "2026-08-18",
+      "name": "Running sprint",
+      "intervals": [
+        {
+          "dist_m": 800.0,
+          "dur_s": 199.0,
+          "kmph": 14.5
+        },
+        {
+          "dist_m": 800.0,
+          "dur_s": 199.0,
+          "kmph": 14.5
+        },
+        {
+          "dist_m": 800.0,
+          "dur_s": 199.0,
+          "kmph": 14.5
+        },
+        {
+          "dist_m": 800.0,
+          "dur_s": 199.0,
+          "kmph": 14.5
+        },
+        {
+          "dist_m": 800.0,
+          "dur_s": 199.0,
+          "kmph": 14.5
+        }
+      ],
+      "total_dist_m": 4000.0,
+      "total_dur_s": 995.0,
+      "avg_kmph": 14.5,
+      "pace_s_per_km": 249
     }
   ]
 }
