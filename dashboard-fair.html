@@ -482,6 +482,19 @@ const CATALOG=PHASES.flatMap(p=>p.names);
 /* occurrences */
 const OCC=[];
 for(const[name,s]of Object.entries(DATA.sessions))s.weeks.forEach((w,i)=>OCC.push({name,i,date:w.date,n:w.n,vol:weekVol(s,i),wk:mondayISO(w.date)}));
+/* The same movement is a separate object inside each session, so cross-session
+   history is keyed by exercise NAME: every logged occurrence, oldest first. */
+const EXHIST={};
+for(const[sn,s]of Object.entries(DATA.sessions))for(const b of s.blocks)for(const e of b.exercises)
+  e.byweek.forEach((wk,i)=>{(EXHIST[e.name]||(EXHIST[e.name]=[])).push({session:sn,date:s.weeks[i].date,n:s.weeks[i].n,wk});});
+Object.values(EXHIST).forEach(a=>a.sort((x,y)=>x.date<y.date?-1:1));
+const exSessions=n=>new Set((EXHIST[n]||[]).map(h=>h.session)).size;
+// the last time this movement was logged before `date`, in ANY session
+function exPrior(name,date){let p=null;for(const h of (EXHIST[name]||[])){if(h.date<date)p=h;}return p;}
+// compact x-axis tag: "GPP S&C 1" -> "GPP 1", "Hinge and Push" -> "H&P"
+function shortSess(n){const m=n.match(/^GPP S&C (\d+)$/);if(m)return 'GPP '+m[1];
+  const w=n.split(/\s+/).filter(x=>x.toLowerCase()!=='and');
+  return w.length>1? w.map(x=>x[0].toUpperCase()).join('&') : n;}
 OCC.sort((a,b)=>a.date<b.date?-1:1);
 const RUNS=(DATA.runs||[]).map((r,idx)=>({...r,idx,wk:mondayISO(r.date)}));
 const WEEKS=[...new Set([...OCC.map(o=>o.wk),...RUNS.map(r=>r.wk)])].sort();
@@ -716,15 +729,23 @@ function detailHTML(name){
 
   const blocks=s.blocks.map(bl=>{
     const rows=bl.exercises.map(e=>{
-      const id='ex'+(exSeq++);EXREG[id]={ex:e,weeks:s.weeks};
+      const id='ex'+(exSeq++);EXREG[id]={ex:e,weeks:s.weeks,exName:e.name,sessName:name};
       if(single){
         const sets=e.byweek[0].sets;
+        // first time in THIS session is not first time ever -- carry the earlier session's history
+        const prior=exPrior(e.name, s.weeks[0].date);
+        const pd=prior? progDelta(prior.wk, e.byweek[0], e.timed) : null;
+        const chip0 = !pd? '<span class="delta new">new</span>'
+          : pd.t==='up'? `<span class="delta up"><span class="dv">${ARWU}</span> ${pd.x}</span>`
+          : pd.t==='down'? `<span class="delta hold"><span class="dv">\u2193</span> ${pd.x}</span>`
+          : '<span class="delta hold">held</span>';
+        const spark0 = prior? miniSpark((EXHIST[e.name]||[]).map(h=>avgE1(h.wk))) : miniSpark(exSeries(e));
         return `<div class="exrow" data-ex="${id}">
           <div class="exrow-main" data-toggle="${id}" role="button" tabindex="0" aria-label="Open ${e.name} chart">
             <div class="ex-name">${e.name}</div>
             <div class="ex-col wt" data-lab="Weight (kg)">${stackW(sets)}</div>
             <div class="ex-col rp" data-lab="Reps">${stackR(sets,e.timed)}</div>
-            ${miniSpark(exSeries(e))}<span class="delta new">new</span>
+            ${spark0}${chip0}
             <span class="chev">${CHEV}</span>
           </div></div>`;
       }
@@ -831,25 +852,45 @@ function chartSVG(id, pts, cfg){
     </div>
     <div class="chart-note">${cfg.note}</div>`;
 }
-function buildChart(id){
-  const {ex,weeks}=EXREG[id];
+function buildChart(id,mode){
+  const {ex,weeks,exName,sessName}=EXREG[id];
+  const all = mode==='all';
+  const rows = all
+    ? (EXHIST[exName]||[])
+    : ex.byweek.map((wk,i)=>({session:sessName,date:weeks[i].date,n:weeks[i].n,wk}));
   const isT=!!ex.timed;
-  const isBW = ex.byweek.every(w=>(w.sets||[]).every(s=>s[0]===0));
-  const n=ex.byweek.length;
-  const pts=ex.byweek.map((wk,i)=>{const v=avgE1(wk);const ns=(wk.sets||[]).length;return{
-    i, val:v, xTop:`W${weeks[i].n}`, xBot:fmtDay(weeks[i].date),
-    roD:`Week ${weeks[i].n} ${MID} ${fmtDay(weeks[i].date)}`,
+  const isBW = rows.every(r=>(r.wk.sets||[]).every(s=>s[0]===0));
+  const n=rows.length;
+  const pts=rows.map((r,i)=>{const wk=r.wk,v=avgE1(wk),ns=(wk.sets||[]).length;return{
+    i, val:v,
+    xTop: all? shortSess(r.session) : `W${r.n}`,
+    xBot: fmtDay(r.date),
+    mark: all && r.session===sessName,
+    roD: (all? r.session : `Week ${r.n}`)+` ${MID} `+fmtDay(r.date),
     roV: ns? wk.sets.map(s=>isT?`${s[1]}s`:fmtSet(s)).join(`  ${MID}  `) : '\u2014',
     roS: v>0? (isT? `avg hold ${rnd1(v)}s ${MID} ${ns} set${ns===1?'':'s'}` : isBW? `avg ${rnd1(v)} reps ${MID} ${ns} set${ns===1?'':'s'}` : `avg est 1RM ${rnd1(v)}kg ${MID} ${ns} set${ns===1?'':'s'}`) : ''
   };});
-  const note = isT
-    ? (n<2
-      ? `Only one session logged so far \u2014 the line grows as you repeat <b>${ex.name}</b>.<br>Each point is your <b>average hold time (seconds) across every set</b> that week.`
-      : `Each point is your <b>average hold time (seconds) across every set</b> that week. The line climbs as you hold longer.`)
+  const metric = isT
+    ? `Each point is your <b>average hold time (seconds) across every set</b> that session.`
+    : `Each point is your <b>average estimated 1-rep max across every set</b> \u2014 each set scored as <b>weight &times; (1 + reps &divide; 30)</b>, then averaged. So the line climbs when <b>any</b> set gets heavier or gains reps, not just your top set.`;
+  const note = all
+    ? `Every time you\u2019ve logged <b>${ex.name}</b>, across every session, in date order \u2014 the <b>diamonds</b> are this session. ${metric}`
     : n<2
-    ? `Only one session logged so far \u2014 the line grows as you repeat <b>${ex.name}</b>.<br>Each point is your <b>average estimated 1-rep max across every set</b> that week \u2014 each set scored as <b>weight &times; (1 + reps &divide; 30)</b>, then averaged.`
-    : `Each point is your <b>average estimated 1-rep max across every set</b> that week \u2014 each set scored as <b>weight &times; (1 + reps &divide; 30)</b>, then averaged. So the line climbs when <b>any</b> set gets heavier or gains reps, not just your top set.`;
-  return chartSVG(id, pts, {title:ex.name, sub:`Avg across sets ${MID} ${n} session${n===1?'':'s'} logged`, metric:isT?'Avg hold (s)':isBW?'Avg reps / set':'Avg est. 1-rep max (kg)', note});
+      ? `Only one session logged so far \u2014 the line grows as you repeat <b>${ex.name}</b>.<br>${metric}`
+      : metric;
+  const sub = all
+    ? `All time \u2014 ${n} session${n===1?'':'s'} across ${exSessions(exName)} workouts`
+    : `Avg across sets ${MID} ${n} session${n===1?'':'s'} logged`;
+  return chartSVG(id, pts, {title:ex.name, sub, metric:isT?'Avg hold (s)':isBW?'Avg reps / set':'Avg est. 1-rep max (kg)', note, markLabel: all? 'This session' : null});
+}
+/* the chart opens session-scoped; the switch appears only when the movement
+   actually shows up in more than one session */
+function exModalHTML(id,mode){
+  const {exName}=EXREG[id];
+  if(exSessions(exName)<2) return buildChart(id,'session');
+  const segs=[['session','This session'],['all','All time']].map(g=>
+    `<button class="${g[0]===mode?'on':''}" data-exscope="${g[0]}" data-exid="${id}">${g[1]}</button>`).join('');
+  return `<div class="seg" style="margin-bottom:14px">${segs}</div>`+buildChart(id,mode);
 }
 function buildRunChart(id){
   const {e,runs,type}=RUNREG[id];
@@ -1256,7 +1297,7 @@ modal.className='modal';modal.id='modal';modal.hidden=true;
 modal.innerHTML=`<div class="modal-backdrop" data-close></div><div class="modal-dialog glass" role="dialog" aria-modal="true"><button class="modal-x" data-close aria-label="Close chart">\u00d7</button><div id="modal-body"></div></div>`;
 document.body.appendChild(modal);
 let lastFocus=null;
-function openChart(id){openModalChart(buildChart(id),id);}
+function openChart(id){openModalChart(exModalHTML(id,'session'),id);}
 function openRunChart(id){openModalChart(buildRunChart(id),id);}
 function openModalChart(html,id){
   lastFocus=document.activeElement;
@@ -1352,6 +1393,10 @@ app.addEventListener('click',e=>{const t=e.target.closest('[data-whoop]');if(t){
 modal.addEventListener('click',e=>{const b=e.target.closest('[data-wgranm]');if(!b)return;
   document.getElementById('modal-body').innerHTML=whoopModalHTML(b.dataset.wid,b.dataset.wgranm);
   initScrub(b.dataset.wid);});
+/* session / all-time switch inside the exercise chart modal */
+modal.addEventListener('click',e=>{const b=e.target.closest('[data-exscope]');if(!b)return;
+  document.getElementById('modal-body').innerHTML=exModalHTML(b.dataset.exid,b.dataset.exscope);
+  initScrub(b.dataset.exid);});
 app.addEventListener('click',e=>{const t=e.target.closest('[data-whooptoggle]');if(t)openWhoopChart(t.dataset.whooptoggle);});
 app.addEventListener('keydown',e=>{const t=e.target.closest('[data-whooptoggle]');if(t&&(e.key==='Enter'||e.key===' ')){e.preventDefault();openWhoopChart(t.dataset.whooptoggle);}});
 app.addEventListener('click',e=>{const t=e.target.closest('[data-runtoggle]');if(t)openRunChart(t.dataset.runtoggle);});
