@@ -3459,6 +3459,306 @@
           ]
         }
       ]
+    },
+    "Chest and Back": {
+      "weeks": [
+        {
+          "n": 1,
+          "date": "2026-08-21"
+        }
+      ],
+      "blocks": [
+        {
+          "label": "Prep",
+          "exercises": [
+            {
+              "name": "Push-up shoulder tap",
+              "byweek": [
+                {
+                  "cell": "BW\u00d710",
+                  "sets": [
+                    [
+                      0.0,
+                      10
+                    ]
+                  ],
+                  "top": 0.0,
+                  "vol": 0.0,
+                  "nsets": 1
+                }
+              ]
+            },
+            {
+              "name": "Banded pull-apart",
+              "byweek": [
+                {
+                  "cell": "BW\u00d715",
+                  "sets": [
+                    [
+                      0.0,
+                      15
+                    ]
+                  ],
+                  "top": 0.0,
+                  "vol": 0.0,
+                  "nsets": 1
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "label": "Block 1",
+          "exercises": [
+            {
+              "name": "Bench press (Smith machine)",
+              "byweek": [
+                {
+                  "cell": "50\u00d710 \u00b7 60\u00d710 \u00b7 65\u00d78",
+                  "sets": [
+                    [
+                      50.0,
+                      10
+                    ],
+                    [
+                      60.0,
+                      10
+                    ],
+                    [
+                      65.0,
+                      8
+                    ]
+                  ],
+                  "top": 65.0,
+                  "vol": 1620.0,
+                  "nsets": 3
+                }
+              ]
+            },
+            {
+              "name": "Single-arm cable high-to-low",
+              "byweek": [
+                {
+                  "cell": "24\u00d710 \u00b7 28\u00d710 \u00b7 28\u00d710",
+                  "sets": [
+                    [
+                      24.0,
+                      10
+                    ],
+                    [
+                      28.0,
+                      10
+                    ],
+                    [
+                      28.0,
+                      10
+                    ]
+                  ],
+                  "top": 28.0,
+                  "vol": 800.0,
+                  "nsets": 3
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "label": "Block 2",
+          "exercises": [
+            {
+              "name": "Incline dumbbell press",
+              "byweek": [
+                {
+                  "cell": "20\u00d712 \u00b7 22.5\u00d712 \u00b7 22.5\u00d710",
+                  "sets": [
+                    [
+                      20.0,
+                      12
+                    ],
+                    [
+                      22.5,
+                      12
+                    ],
+                    [
+                      22.5,
+                      10
+                    ]
+                  ],
+                  "top": 22.5,
+                  "vol": 735.0,
+                  "nsets": 3
+                }
+              ]
+            },
+            {
+              "name": "Seated row",
+              "byweek": [
+                {
+                  "cell": "30\u00d712 \u00b7 36\u00d712 \u00b7 42\u00d712",
+                  "sets": [
+                    [
+                      30.0,
+                      12
+                    ],
+                    [
+                      36.0,
+                      12
+                    ],
+                    [
+                      42.0,
+                      12
+                    ]
+                  ],
+                  "top": 42.0,
+                  "vol": 1296.0,
+                  "nsets": 3
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "label": "Block 3",
+          "exercises": [
+            {
+              "name": "Seated cable press",
+              "byweek": [
+                {
+                  "cell": "36\u00d710 \u00b7 36\u00d78",
+                  "sets": [
+                    [
+                      36.0,
+                      10
+                    ],
+                    [
+                      36.0,
+                      8
+                    ]
+                  ],
+                  "top": 36.0,
+                  "vol": 648.0,
+                  "nsets": 2
+                }
+              ]
+            },
+            {
+              "name": "Seated cable fly",
+              "byweek": [
+                {
+                  "cell": "6\u00d712 \u00b7 12\u00d712",
+                  "sets": [
+                    [
+                      6.0,
+                      12
+                    ],
+                    [
+                      12.0,
+                      12
+                    ]
+                  ],
+                  "top": 12.0,
+                  "vol": 216.0,
+                  "nsets": 2
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "label": "Block 4",
+          "exercises": [
+            {
+              "name": "Push-up",
+              "byweek": [
+                {
+                  "cell": "BW\u00d78 \u00b7 BW\u00d78",
+                  "sets": [
+                    [
+                      0.0,
+                      8
+                    ],
+                    [
+                      0.0,
+                      8
+                    ]
+                  ],
+                  "top": 0.0,
+                  "vol": 0.0,
+                  "nsets": 2
+                }
+              ]
+            },
+            {
+              "name": "Head-supported bent-over row",
+              "byweek": [
+                {
+                  "cell": "20\u00d712 \u00b7 20\u00d712",
+                  "sets": [
+                    [
+                      20.0,
+                      12
+                    ],
+                    [
+                      20.0,
+                      12
+                    ]
+                  ],
+                  "top": 20.0,
+                  "vol": 480.0,
+                  "nsets": 2
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "label": "Block 5",
+          "exercises": [
+            {
+              "name": "Incline tension curl",
+              "byweek": [
+                {
+                  "cell": "15\u00d710 \u00b7 15\u00d79",
+                  "sets": [
+                    [
+                      15.0,
+                      10
+                    ],
+                    [
+                      15.0,
+                      9
+                    ]
+                  ],
+                  "top": 15.0,
+                  "vol": 285.0,
+                  "nsets": 2
+                }
+              ]
+            },
+            {
+              "name": "Seated tricep extension",
+              "byweek": [
+                {
+                  "cell": "12\u00d712 \u00b7 12\u00d712",
+                  "sets": [
+                    [
+                      12.0,
+                      12
+                    ],
+                    [
+                      12.0,
+                      12
+                    ]
+                  ],
+                  "top": 12.0,
+                  "vol": 288.0,
+                  "nsets": 2
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
   },
   "runs": [

@@ -77,6 +77,14 @@ CANON = {
     "single leg hip thrust": "Single-leg hip thrust",
     "seated calf raises": "Seated calf raise",
     "front raise dumbbell": "Dumbbell front raise",
+    # Phase 2 - Chest and Back
+    "banded pull aparts": "Banded pull-apart",
+    "bench press smyth machine": "Bench press (Smith machine)",
+    "incline dumbbell press": "Incline dumbbell press",
+    "seated rows": "Seated row",
+    "seated cable flys": "Seated cable fly",
+    "push up": "Push-up",
+    "head support bent over rows": "Head-supported bent-over row",
 }
 
 # ---- programme definition: superset blocks per session ------------------
@@ -121,6 +129,17 @@ PROGRAMME = {
         ("Block 3", ["Single-leg hip thrust", "Seated calf raise", "Dumbbell front raise"]),
         ("Block 4", ["Seated DB curl-to-press", "Lying tricep extension"]),
     ],
+    # Phase 2 (from 21 Aug 2026), logged as "Upper body hypertrophy Chest and
+    # Back". Hypertrophy day: pairs alternating chest/back rather than tri-sets.
+    # Blocks inferred from set counts + logging order -- PT to confirm.
+    "Chest and Back": [
+        ("Prep",  ["Push-up shoulder tap", "Banded pull-apart"]),
+        ("Block 1", ["Bench press (Smith machine)", "Single-arm cable high-to-low"]),
+        ("Block 2", ["Incline dumbbell press", "Seated row"]),
+        ("Block 3", ["Seated cable press", "Seated cable fly"]),
+        ("Block 4", ["Push-up", "Head-supported bent-over row"]),
+        ("Block 5", ["Incline tension curl", "Seated tricep extension"]),
+    ],
 }
 
 # which CSV "Name" maps to which session key
@@ -130,6 +149,7 @@ SESSION_MAP = {
     "gpp s&c 3": "GPP S&C 3",
     "knees and pull": "Knees and Pull",
     "hinge and push": "Hinge and Push",
+    "upper body hypertrophy chest and back": "Chest and Back",
 }
 
 # ---- parse CSV ----------------------------------------------------------
