@@ -4025,6 +4025,22 @@
       "total_dur_s": 995.0,
       "avg_kmph": 14.5,
       "pace_s_per_km": 249
+    },
+    {
+      "type": "long",
+      "date": "2026-08-22",
+      "name": "Treadmill",
+      "intervals": [
+        {
+          "dist_m": 6000.0,
+          "dur_s": 1929.0,
+          "kmph": 11.2
+        }
+      ],
+      "total_dist_m": 6000.0,
+      "total_dur_s": 1929.0,
+      "avg_kmph": 11.2,
+      "pace_s_per_km": 322
     }
   ]
 }
