@@ -1417,7 +1417,8 @@ function initTilt(){
 }
 function footerHTML(){
   return `<footer><div class="legend"><b>Reading it:</b> each session tile shows what was trained; open one, tap a block header to collapse it, or tap any exercise to open its <b>progression chart</b>.
-    <br><br><b>What the chart shows:</b> for each week it takes the <b>best set</b> of that exercise and computes an <b>estimated 1-rep max</b> using the Epley formula &mdash; <b>weight &times; (1 + reps &divide; 30)</b> &mdash; then plots that one number per week. That's why the line rises whether load <b>or</b> reps go up (both push the estimate higher). For bodyweight moves there's no load, so it plots <b>top-set reps</b> instead.</div>
+    <br><br><b>What the chart shows:</b> for each session it scores <b>every set</b> as an <b>estimated 1-rep max</b> using the Epley formula &mdash; <b>weight &times; (1 + reps &divide; 30)</b> &mdash; then plots the <b>average across those sets</b>. That's why the line rises whether load <b>or</b> reps go up, and whether the gain came from your top set or a back-off set. For bodyweight moves there's no load, so it plots <b>average reps</b>; for timed holds, <b>average hold in seconds</b>.
+    <br><br><b>Across sessions:</b> a movement that appears in more than one session keeps <b>one shared history</b> &mdash; its chart opens on this session and can switch to <b>All time</b>, where the diamonds mark the session you came from.</div>
     <div class="fine">Built from a RepCount export ${MID} supersets restored, weights in kg.</div></footer>`;
 }
 document.getElementById('tg').addEventListener('click',()=>{const r=document.documentElement;
