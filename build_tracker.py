@@ -157,6 +157,8 @@ SESSION_MAP = {
 data = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
 timed_ex = set()  # exercises logged as timed holds (Duration only) -- "reps" = seconds
 runs_raw = defaultdict(list)  # keyed by Workout Start -> list of cardio intervals
+skipped_blank = defaultdict(int)  # (date, session) -> unlogged template rows dropped
+empty_cardio = defaultdict(int)  # (date, name) -> cardio rows with no duration logged
 with open(CSV_PATH, newline="") as f:
     for r in csv.DictReader(f):
         start = r["Workout Start"]
@@ -180,11 +182,24 @@ with open(CSV_PATH, newline="") as f:
                 runs_raw[start].append({"name": r["Exercise"].strip(),
                                         "dist_m": dist, "dur_s": dur,
                                         "note": r["Notes"].strip()})
+            else:
+                # No duration means no interval at all (a cardio workout opened in
+                # RepCount but never filled in). Report it: an empty workout leaves
+                # runs_raw untouched, so the backfill WARN below can never see it
+                # and the run would vanish from the dashboard with no trace.
+                empty_cardio[(start[:10], r["Exercise"].strip())] += 1
             continue
         sess_raw = norm(r["Name"])
         if sess_raw not in SESSION_MAP:
             continue
         session = SESSION_MAP[sess_raw]
+        # RepCount can export a second, unlogged copy of a session (the planned
+        # template: no Workout End, every Weight/Reps/Duration blank). Those rows
+        # are not results -- without this guard they fall through as (0.0, 0) and
+        # land as phantom "BW x 0" sets that double every nsets/volume count.
+        if not r["Weight"] and not r["Reps"] and not r["Duration"]:
+            skipped_blank[(date, session)] += 1
+            continue
         ex = CANON.get(norm(r["Exercise"]), r["Exercise"].strip())
         try:
             w = float(r["Weight"]) if r["Weight"] else 0.0
@@ -206,6 +221,13 @@ with open(CSV_PATH, newline="") as f:
             except ValueError:
                 pass
         data[session][date][ex].append((w, reps))
+
+for (date, name), n in sorted(empty_cardio.items()):
+    print(f"  [empty] {date} {name}: {n} cardio row(s) with no distance/duration "
+          f"-- nothing logged, run omitted from the dashboard")
+for (date, session), n in sorted(skipped_blank.items()):
+    print(f"  [blank] {date} {session}: dropped {n} unlogged template row(s) "
+          f"(no weight, no reps, no duration)")
 
 # ---- backfill dropped interval distances --------------------------------
 # RepCount sometimes exports one interval of a uniform set with a blank Distance.
